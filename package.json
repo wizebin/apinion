@@ -1,0 +1,61 @@
+{
+  "name": "apinion",
+  "version": "0.0.1",
+  "description": "Opinionated API framework built on express",
+  "homepage": "https://github.com/wizebin/apinion",
+  "bugs": {
+    "url": "https://github.com/wizebin/apinion/issues",
+    "email": "wizebin@gmail.com"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "wizebin",
+    "email": "wizebin@gmail.com",
+    "url": "https://wizebin.com"
+  },
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wizebin/apinion"
+  },
+  "scripts": {
+    "test": "jest",
+    "execute-test": "babel-node ./src/test.js",
+    "execute": "nodemon --exec \"npm run execute-test\"",
+    "dev": "NODE_ENV=development rollup -c rollup.config.js && npm run copyextras",
+    "build": "NODE_ENV=production rollup -c rollup.config.js && npm run copyextras",
+    "copyextras": "cp ./src/index.d.ts ./dist/index.d.ts",
+    "maketypes": "tsc --allowJs true --emitDeclarationOnly true --declaration ./src/index.js --declarationDir types",
+    "generate-docs": "node_modules/.bin/jsdoc --configure .jsdoc.json --verbose"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "helmet": "^4.2.0",
+    "objer": "^1.0.46"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.12.10",
+    "@babel/core": "^7.12.10",
+    "@babel/node": "^7.12.10",
+    "@babel/plugin-proposal-class-properties": "^7.0.0",
+    "@babel/plugin-proposal-decorators": "^7.0.0",
+    "@babel/plugin-proposal-numeric-separator": "^7.0.0",
+    "@babel/plugin-proposal-throw-expressions": "^7.0.0",
+    "@babel/plugin-syntax-dynamic-import": "^7.0.0",
+    "@babel/preset-env": "^7.12.10",
+    "@babel/register": "^7.12.10",
+    "babel-preset-es2015-rollup": "^3.0.0",
+    "jest": "^24.9.0",
+    "jsdoc": "^3.6.2",
+    "jsdoc-export-default-interop": "^0.3.1",
+    "minami": "^1.2.3",
+    "mock-local-storage": "^1.0.5",
+    "nodemon": "^2.0.6",
+    "rollup": "^1.16.7",
+    "rollup-plugin-babel": "^4.0.1"
+  },
+  "engines": {
+    "node": ">=6.0.0"
+  }
+}

@@ -1,0 +1,9 @@
+.babelrc
+.jsdoc.json
+.vscode
+docs/
+example/
+jest.config.js
+rollup.config.js
+src
+webpack.config.js
