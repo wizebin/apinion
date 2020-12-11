@@ -123,12 +123,12 @@ export class Router {
     return this.expressConnection;
   }
   enableCors = (origin = '*', headers = 'Origin, X-Requested-With, Content-Type, Accept') => {
-    app.use((req, res, next) => {
+    this.expressApp.use((req, res, next) => {
       res.header('Access-Control-Allow-Origin', origin);
       res.header('Access-Control-Allow-Headers', headers);
       next();
     });
-    app.options('*', (request, result) => result.status(200).send());
+    this.expressApp.options('*', (request, result) => result.status(200).send());
   }
   close = () => {
     if (this.connection) {
