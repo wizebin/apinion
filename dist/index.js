@@ -829,12 +829,14 @@
       _defineProperty(this, "enableCors", function () {
         var origin = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '*';
         var headers = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'Origin, X-Requested-With, Content-Type, Accept';
-        app.use(function (req, res, next) {
+
+        _this.expressApp.use(function (req, res, next) {
           res.header('Access-Control-Allow-Origin', origin);
           res.header('Access-Control-Allow-Headers', headers);
           next();
         });
-        app.options('*', function (request, result) {
+
+        _this.expressApp.options('*', function (request, result) {
           return result.status(200).send();
         });
       });
