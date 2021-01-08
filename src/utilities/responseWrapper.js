@@ -25,11 +25,11 @@ export function responseWrapper(func, config) {
   return async (request, response) => {
     try {
       const raw = request.body;
-      if (raw) {
+      if (raw && !config.noParse) {
         const parsed_body = parseBody(raw.toString());
         request.parsed_body = parsed_body;
       }
-      const params = { request, response, body: request.parsed_body, query: request.query, headers: request.headers };
+      const params = { request, response, body: config.noParse ? request.body : request.parsed_body, query: request.query, headers: request.headers };
       if (config.authenticator) {
         params.identity = await config.authenticator(params);
       }

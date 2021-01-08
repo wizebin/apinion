@@ -122,7 +122,7 @@ export class Router {
   expressConnection() {
     return this.expressConnection;
   }
-  enableCors = (origin = '*', headers = 'Origin, X-Requested-With, Content-Type, Accept') => {
+  enableCors = (origin = '*', headers = 'Origin, X-Requested-With, Content-Type, Accept, Authorization') => {
     this.expressApp.use((req, res, next) => {
       res.header('Access-Control-Allow-Origin', origin);
       res.header('Access-Control-Allow-Headers', headers);

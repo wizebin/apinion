@@ -559,7 +559,7 @@
                 _context.prev = 0;
                 raw = request.body;
 
-                if (raw) {
+                if (raw && !config.noParse) {
                   parsed_body = parseBody(raw.toString());
                   request.parsed_body = parsed_body;
                 }
@@ -567,7 +567,7 @@
                 params = {
                   request: request,
                   response: response,
-                  body: request.parsed_body,
+                  body: config.noParse ? request.body : request.parsed_body,
                   query: request.query,
                   headers: request.headers
                 };
@@ -828,7 +828,7 @@
 
       _defineProperty(this, "enableCors", function () {
         var origin = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '*';
-        var headers = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'Origin, X-Requested-With, Content-Type, Accept';
+        var headers = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'Origin, X-Requested-With, Content-Type, Accept, Authorization';
 
         _this.expressApp.use(function (req, res, next) {
           res.header('Access-Control-Allow-Origin', origin);
