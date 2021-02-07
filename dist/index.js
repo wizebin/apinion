@@ -803,6 +803,11 @@
   }
 
   var Router = /*#__PURE__*/function () {
+    /**
+     * @param {express} expressApp
+     * @param {Router} parent
+     * @param {string} baseDirectory
+     */
     function Router(expressApp, parent, baseDirectory) {
       var _this = this;
 
@@ -832,6 +837,14 @@
         return result;
       });
 
+      _defineProperty(this, "getCleanedSubPath", function (path) {
+        var subPath = _this.getSubPath(path);
+
+        if (subPath.length > 0 && subPath[0] !== '/') return '/' + subPath; // http://server.comFIX => http://server.com/FIX
+
+        return subPath;
+      });
+
       _defineProperty(this, "getSubPath", function (path) {
         if (!_this.baseDirectory) return path;
         if (path === '/') return _this.baseDirectory;
@@ -844,7 +857,7 @@
       });
 
       _defineProperty(this, "subrouter", function (subdirectory) {
-        var subRouter = new Router(_this.expressApp, _this, _this.getSubPath(subdirectory));
+        var subRouter = new Router(_this.expressApp, _this, _this.getCleanedSubPath(subdirectory));
         subRouter.setAuthenticator(_this.authenticator);
 
         _this.describeSubroute(subdirectory, {
@@ -865,15 +878,19 @@
       });
 
       _defineProperty(this, "makeRouteDetails", function (type, route, config, callback) {
-        _this.describeSubroute(route, _defineProperty({}, type, config));
+        var defaultedConfig = config || {};
 
-        var params = [_this.getSubPath(route)];
+        var cleanedPath = _this.getCleanedSubPath(route);
 
-        if (config !== null && config !== void 0 && config.middleware) {
-          params = params.concat(config.middleware);
+        _this.describeSubroute(cleanedPath, _defineProperty({}, type, defaultedConfig));
+
+        var params = [cleanedPath];
+
+        if (defaultedConfig !== null && defaultedConfig !== void 0 && defaultedConfig.middleware) {
+          params = params.concat(defaultedConfig.middleware);
         }
 
-        params.push(_this.getResponseWrapper(callback, config));
+        params.push(_this.getResponseWrapper(callback, defaultedConfig));
         return params;
       });
 
@@ -986,12 +1003,21 @@
       });
 
       _defineProperty(this, "listen", function (port, callback) {
-        _this.connection = _this.expressApp.listen(port, function (results) {
-          console.log('listening on port', port);
-          callback === null || callback === void 0 ? void 0 : callback(results);
+        return new Promise(function (resolve, reject) {
+          _this.connection = _this.expressApp.listen(port, function (results) {
+            console.log('listening on port', port);
+            callback === null || callback === void 0 ? void 0 : callback(results);
+
+            _this.expressApp.removeListener('error', reject);
+
+            resolve(results);
+          });
+
+          _this.expressApp.once('error', reject);
+
+          _this.connection.keepAliveTimeout = 60 * 1000;
+          _this.connection.headersTimeout = 61 * 1000;
         });
-        _this.connection.keepAliveTimeout = 60 * 1000;
-        _this.connection.headersTimeout = 61 * 1000;
       });
 
       this.parent = parent;

@@ -3,6 +3,11 @@ import { joinWithSingle } from './utilities/joinWithSingle';
 import { responseWrapper } from './utilities/responseWrapper';
 
 export class Router {
+  /**
+   * @param {express} expressApp
+   * @param {Router} parent
+   * @param {string} baseDirectory
+   */
   constructor(expressApp, parent, baseDirectory) {
     this.parent = parent;
     this.expressApp = expressApp || express();
@@ -30,6 +35,13 @@ export class Router {
     return result;
   }
 
+  getCleanedSubPath = (path) => {
+    const subPath = this.getSubPath(path);
+    if (subPath.length > 0 && subPath[0] !== '/') return '/' + subPath; // http://server.comFIX => http://server.com/FIX
+
+    return subPath;
+  }
+
   getSubPath = (path) => {
     if (!this.baseDirectory) return path;
     if (path === '/') return this.baseDirectory;
@@ -42,7 +54,7 @@ export class Router {
   }
 
   subrouter = (subdirectory) => {
-    const subRouter = new Router(this.expressApp, this, this.getSubPath(subdirectory));
+    const subRouter = new Router(this.expressApp, this, this.getCleanedSubPath(subdirectory));
     subRouter.setAuthenticator(this.authenticator);
     this.describeSubroute(subdirectory, { subrouter: subRouter });
     return subRouter;
@@ -57,12 +69,14 @@ export class Router {
   }
 
   makeRouteDetails = (type, route, config, callback) => {
-    this.describeSubroute(route, { [type]: config });
-    let params = [this.getSubPath(route)];
-    if (config?.middleware) {
-      params = params.concat(config.middleware)
+    const defaultedConfig = config || {};
+    const cleanedPath = this.getCleanedSubPath(route);
+    this.describeSubroute(cleanedPath, { [type]: defaultedConfig });
+    let params = [cleanedPath];
+    if (defaultedConfig?.middleware) {
+      params = params.concat(defaultedConfig.middleware)
     }
-    params.push(this.getResponseWrapper(callback, config));
+    params.push(this.getResponseWrapper(callback, defaultedConfig));
     return params;
   }
 
@@ -136,11 +150,16 @@ export class Router {
     }
   }
   listen = (port, callback) => {
-    this.connection = this.expressApp.listen(port, (results) => {
-      console.log('listening on port', port);
-      callback?.(results);
+    return new Promise((resolve, reject) => {
+      this.connection = this.expressApp.listen(port, (results) => {
+        console.log('listening on port', port);
+        callback?.(results);
+        this.expressApp.removeListener('error', reject)
+        resolve(results);
+      });
+      this.expressApp.once('error', reject);
+      this.connection.keepAliveTimeout = 60 * 1000;
+      this.connection.headersTimeout = 61 * 1000;
     });
-    this.connection.keepAliveTimeout = 60 * 1000;
-    this.connection.headersTimeout = 61 * 1000;
   }
 }
