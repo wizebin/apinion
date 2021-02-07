@@ -1,5 +1,6 @@
 import { applyHttpError, HttpError } from './HttpError';
 import { parseBody } from './parseBody';
+import { WritableBufferStream } from './WritableBufferStream';
 
 function getParams(keyList, { body, query }) {
   const missing = [];
@@ -16,6 +17,14 @@ function getParams(keyList, { body, query }) {
   return { missing, data };
 }
 
+function collectBody(request) {
+  return new Promise((resolve, reject) => {
+    const output = new WritableBufferStream(resolve);
+    output.on('error', reject);
+    request.pipe(output);
+  });
+}
+
 /**
  *
  * @param {function} func
@@ -24,12 +33,12 @@ function getParams(keyList, { body, query }) {
 export function responseWrapper(func, config) {
   return async (request, response) => {
     try {
-      const raw = request.body;
-      if (raw && !config.noParse) {
-        const parsed_body = parseBody(raw.toString());
-        request.parsed_body = parsed_body;
+      if (!config.noParse) {
+        request.raw = await collectBody(request);
+        const body = parseBody(request.raw.toString());
+        request.body = body;
       }
-      const params = { request, response, body: config.noParse ? request.body : request.parsed_body, query: request.query, headers: request.headers };
+      const params = { request, response, body: config.noParse ? undefined : request.body, query: request.query, headers: request.headers };
       if (config.authenticator) {
         params.identity = await config.authenticator(params);
       }

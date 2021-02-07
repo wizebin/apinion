@@ -1,8 +1,8 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('objer'), require('express')) :
-  typeof define === 'function' && define.amd ? define(['exports', 'objer', 'express'], factory) :
-  (global = global || self, factory(global.apinion = {}, global.objer, global.express));
-}(this, (function (exports, objer, express) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('objer'), require('express'), require('stream')) :
+  typeof define === 'function' && define.amd ? define(['exports', 'objer', 'express', 'stream'], factory) :
+  (global = global || self, factory(global.apinion = {}, global.objer, global.express, global.stream));
+}(this, (function (exports, objer, express, stream) { 'use strict';
 
   express = express && Object.prototype.hasOwnProperty.call(express, 'default') ? express['default'] : express;
 
@@ -77,6 +77,85 @@
     }
 
     return obj;
+  }
+
+  function _inherits(subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function");
+    }
+
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        writable: true,
+        configurable: true
+      }
+    });
+    if (superClass) _setPrototypeOf(subClass, superClass);
+  }
+
+  function _getPrototypeOf(o) {
+    _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
+      return o.__proto__ || Object.getPrototypeOf(o);
+    };
+    return _getPrototypeOf(o);
+  }
+
+  function _setPrototypeOf(o, p) {
+    _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
+      o.__proto__ = p;
+      return o;
+    };
+
+    return _setPrototypeOf(o, p);
+  }
+
+  function _isNativeReflectConstruct() {
+    if (typeof Reflect === "undefined" || !Reflect.construct) return false;
+    if (Reflect.construct.sham) return false;
+    if (typeof Proxy === "function") return true;
+
+    try {
+      Date.prototype.toString.call(Reflect.construct(Date, [], function () {}));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function _assertThisInitialized(self) {
+    if (self === void 0) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+
+    return self;
+  }
+
+  function _possibleConstructorReturn(self, call) {
+    if (call && (typeof call === "object" || typeof call === "function")) {
+      return call;
+    }
+
+    return _assertThisInitialized(self);
+  }
+
+  function _createSuper(Derived) {
+    var hasNativeReflectConstruct = _isNativeReflectConstruct();
+
+    return function _createSuperInternal() {
+      var Super = _getPrototypeOf(Derived),
+          result;
+
+      if (hasNativeReflectConstruct) {
+        var NewTarget = _getPrototypeOf(this).constructor;
+
+        result = Reflect.construct(Super, arguments, NewTarget);
+      } else {
+        result = Super.apply(this, arguments);
+      }
+
+      return _possibleConstructorReturn(this, result);
+    };
   }
 
   function _toConsumableArray(arr) {
@@ -508,6 +587,49 @@
     });
   }
 
+  var WritableBufferStream = /*#__PURE__*/function (_Writable) {
+    _inherits(WritableBufferStream, _Writable);
+
+    var _super = _createSuper(WritableBufferStream);
+
+    function WritableBufferStream(callback, options) {
+      var _this;
+
+      _classCallCheck(this, WritableBufferStream);
+
+      _this = _super.call(this, options);
+
+      _defineProperty(_assertThisInitialized(_this), "buffer", Buffer.alloc(0));
+
+      _this.callback = callback;
+      return _this;
+    }
+
+    _createClass(WritableBufferStream, [{
+      key: "_write",
+      value: function _write(chunk, encoding, callback) {
+        if (chunk) {
+          this.buffer = Buffer.concat([this.buffer, chunk]);
+        }
+
+        callback();
+      }
+    }, {
+      key: "_final",
+      value: function _final(callback) {
+        this.callback(this.buffer);
+        callback();
+      }
+    }, {
+      key: "_destroy",
+      value: function _destroy() {
+        this.buffer = null;
+      }
+    }]);
+
+    return WritableBufferStream;
+  }(stream.Writable);
+
   function getParams(keyList, _ref) {
     var body = _ref.body,
         query = _ref.query;
@@ -540,6 +662,14 @@
       data: data
     };
   }
+
+  function collectBody(request) {
+    return new Promise(function (resolve, reject) {
+      var output = new WritableBufferStream(resolve);
+      output.on('error', reject);
+      request.pipe(output);
+    });
+  }
   /**
    *
    * @param {function} func
@@ -550,49 +680,57 @@
   function responseWrapper(func, config) {
     return /*#__PURE__*/function () {
       var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(request, response) {
-        var raw, parsed_body, params, _getParams, missing, data, _getParams2, _missing, _data, endpointResponse;
+        var body, params, _getParams, missing, data, _getParams2, _missing, _data, endpointResponse;
 
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.prev = 0;
-                raw = request.body;
 
-                if (raw && !config.noParse) {
-                  parsed_body = parseBody(raw.toString());
-                  request.parsed_body = parsed_body;
+                if (config.noParse) {
+                  _context.next = 7;
+                  break;
                 }
 
+                _context.next = 4;
+                return collectBody(request);
+
+              case 4:
+                request.raw = _context.sent;
+                body = parseBody(request.raw.toString());
+                request.body = body;
+
+              case 7:
                 params = {
                   request: request,
                   response: response,
-                  body: config.noParse ? request.body : request.parsed_body,
+                  body: config.noParse ? undefined : request.body,
                   query: request.query,
                   headers: request.headers
                 };
 
                 if (!config.authenticator) {
-                  _context.next = 8;
+                  _context.next = 12;
                   break;
                 }
 
-                _context.next = 7;
+                _context.next = 11;
                 return config.authenticator(params);
 
-              case 7:
+              case 11:
                 params.identity = _context.sent;
 
-              case 8:
+              case 12:
                 if (!config.required) {
-                  _context.next = 13;
+                  _context.next = 17;
                   break;
                 }
 
                 _getParams = getParams(config.required, params), missing = _getParams.missing, data = _getParams.data;
 
                 if (!(missing.length > 0)) {
-                  _context.next = 12;
+                  _context.next = 16;
                   break;
                 }
 
@@ -603,19 +741,19 @@
                   }).join(', '))
                 });
 
-              case 12:
+              case 16:
                 params.required = data;
 
-              case 13:
+              case 17:
                 if (!config.hidden_required) {
-                  _context.next = 18;
+                  _context.next = 22;
                   break;
                 }
 
                 _getParams2 = getParams(config.hidden, params), _missing = _getParams2.missing, _data = _getParams2.data;
 
                 if (!(_missing.length > 0)) {
-                  _context.next = 17;
+                  _context.next = 21;
                   break;
                 }
 
@@ -624,14 +762,14 @@
                   message: 'your request is incomplete (this is probably because you are missing some essential hidden requirement)'
                 });
 
-              case 17:
+              case 21:
                 params.hidden = _data;
 
-              case 18:
-                _context.next = 20;
+              case 22:
+                _context.next = 24;
                 return func(params);
 
-              case 20:
+              case 24:
                 endpointResponse = _context.sent;
 
                 if (!response._headerSent) {
@@ -642,20 +780,20 @@
                   }
                 }
 
-                _context.next = 27;
+                _context.next = 31;
                 break;
 
-              case 24:
-                _context.prev = 24;
+              case 28:
+                _context.prev = 28;
                 _context.t0 = _context["catch"](0);
                 applyHttpError(request, response, _context.t0);
 
-              case 27:
+              case 31:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[0, 24]]);
+        }, _callee, null, [[0, 28]]);
       }));
 
       return function (_x, _x2) {

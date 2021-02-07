@@ -1,7 +1,7 @@
 ## APInion
 #### an opinionated API framework built on express
 
-Presently this framework is not ready for production use outside of my own projects, proceed at your own risk.
+* Presently this framework is not ready for production use outside of my own projects, proceed at your own risk.
 
 ## API Documentation
 
@@ -77,7 +77,7 @@ router.applyRoutes(routeArray);
 now you can hit `yourapi/v1/some_secret?secret=hi` and `yourapi/test`
 
 ### promises
-promises are accepted as endpoint callbacks
+* promises are accepted as endpoint callbacks
 
 ```javascript
 import { Router } from 'apinion';
@@ -94,7 +94,7 @@ router.listen(4495);
 ```
 
 ## authentication
-You can require authentication functions on a subrouter or on individual endpoints
+* You can require authentication functions on a subrouter or on individual endpoints
 
 #### subrouter authentication:
 ```javascript
@@ -135,6 +135,29 @@ const tempAuthenticator = makeHardcodedBasicAuthenticator([{ username: 'joe', pa
 
 router.get('/auth', { authenticator: tempAuthenticator }, ({ identity }) => {
   return identity;
+});
+
+router.listen(5550);
+```
+
+
+## streaming post body
+* use `noParse` to prevent the input from being automatically parsed, in this mode the body parameter is guaranteed to be undefined
+
+```javascript
+import { Router, makeHardcodedBasicAuthenticator } from 'apinion';
+import fs from 'fs';
+
+const router = new Router();
+
+router.get('/streamable', { noParse: true }, ({ request }) => {
+  const destination = fs.createWriteStream('filename.ext');
+  request.pipe(destination);
+  return new Promise(resolve => {
+    destination.on('finish', () => {
+      resolve({ message: 'wrote file', filename: 'filename.ext' });
+    });
+  });
 });
 
 router.listen(5550);
