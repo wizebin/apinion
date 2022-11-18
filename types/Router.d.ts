@@ -1,12 +1,18 @@
 export class Router {
-    constructor(expressApp: any, parent: any, baseDirectory: any);
-    parent: any;
+    /**
+     * @param {express} expressApp
+     * @param {Router} parent
+     * @param {string} baseDirectory
+     */
+    constructor(expressApp: express, parent: Router, baseDirectory: string);
+    parent: Router;
     expressApp(): () => any;
-    baseDirectory: any;
+    baseDirectory: string;
     routes: {};
     setAuthenticator: (authenticator: any) => void;
     authenticator: any;
     getRoutes: () => {};
+    getCleanedSubPath: (path: any) => any;
     getSubPath: (path: any) => any;
     describeSubroute: (subdirectory: any, meta: any) => void;
     subrouter: (subdirectory: any) => Router;
@@ -24,6 +30,6 @@ export class Router {
     expressConnection(): () => any;
     enableCors: (origin?: string, headers?: string) => void;
     close: () => void;
-    listen: (port: any, callback: any) => void;
+    listen: (port: any, callback: any) => Promise<any>;
     connection: any;
 }

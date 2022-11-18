@@ -959,8 +959,10 @@
                 patch = route.patch,
                 post = route.post,
                 put = route.put,
-                subrouter = route.subrouter;
+                subrouter = route.subrouter,
+                any = route.any;
             if (executor) _this.any(path, executor.config, executor.callback);
+            if (any) _this.any(path, any.config, any.callback);
             if (get) _this.get(path, get.config, get.callback);
             if (post) _this.post(path, post.config, post.callback);
             if (options) _this.options(path, options.config, options.callback);

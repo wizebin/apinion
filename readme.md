@@ -68,6 +68,7 @@ const anotherEndpoint = makeEndpoint({ name: 'test' }, () => {
 const routeArray = [
   { path: 'v1', subrouter: [
     { path: '/some_secret', get: endpoint },
+    { path: '/inline', any: { config: { name: 'hi' }, callback: () => 'inline created' } },
   ]},
   { path: '/test', get: anotherEndpoint },
 ];

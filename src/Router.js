@@ -115,9 +115,10 @@ export class Router {
   }
   applyRoutes = (routes) => {
     for (let route of routes) {
-      const { path, executor, get, options, delete: deleteRoute, patch, post, put, subrouter } = route;
+      const { path, executor, get, options, delete: deleteRoute, patch, post, put, subrouter, any } = route;
 
       if (executor) this.any(path, executor.config, executor.callback);
+      if (any) this.any(path, any.config, any.callback);
       if (get) this.get(path, get.config, get.callback);
       if (post) this.post(path, post.config, post.callback);
       if (options) this.options(path, options.config, options.callback);
