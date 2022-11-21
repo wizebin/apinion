@@ -38,7 +38,7 @@ export function responseWrapper(func, config) {
         const body = parseBody(request.raw.toString());
         request.body = body;
       }
-      const params = { request, response, body: config.noParse ? undefined : request.body, query: request.query, headers: request.headers };
+      const params = { request, response, body: config.noParse ? undefined : request.body, query: request.query, headers: request.headers, params: Object.assign({}, request.query || {}, request.body || {}) };
       if (config.authenticator) {
         params.identity = await config.authenticator(params);
       }

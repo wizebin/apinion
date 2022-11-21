@@ -114,6 +114,10 @@ export class Router {
     this.expressApp.use(...passthrough);
   }
   applyRoutes = (routes) => {
+    if (Array.isArray && !Array.isArray(routes)) {
+      routes = [routes];
+    }
+
     for (let route of routes) {
       const { path, executor, get, options, delete: deleteRoute, patch, post, put, subrouter, any } = route;
 

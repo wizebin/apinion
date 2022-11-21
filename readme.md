@@ -163,3 +163,61 @@ router.get('/streamable', { noParse: true }, ({ request }) => {
 
 router.listen(5550);
 ```
+
+## combined parameters and custom request auth:
+```javascript
+import { Router, makeRequestAuthenticator } from 'apinion';
+
+const router = new Router();
+const tempAuthenticator = makeRequestAuthenticator((input) => {
+  if (input?.headers?.secret === 'fancypants') return { admin: true };
+
+  return null;
+});
+
+router.get('/paramtest', { authenticator: tempAuthenticator, required: ['a', 'b'], optional: ['c'] }, ({ identity, params }) => {
+  if (identity?.admin) {
+    return params.a + params.b + params.c;
+  } else {
+    return params.a;
+  }
+});
+
+router.listen(5550);
+```
+
+##  makeEndpoint:
+```javascript
+import { Router, makeEndpoint } from 'apinion';
+
+const router = new Router();
+
+const customEndpoint = makeEndpoint({ name: 'custom', required: ['z'] }, async (params) => {
+  return { something: 'another' };
+});
+
+const customEndpoint2 = makeEndpoint({ name: 'custom2' }, async (params) => {
+  return { message: 'hola' };
+});
+
+const customEndpoint3 = makeEndpoint({ name: 'custom3' }, async (params) => {
+  return { action: 'do the thing' };
+});
+
+const routes = [
+  {
+    path: 'v1',
+    subrouter: [
+      { path: 'test', get: customEndpoint },
+      { path: 'test2', post: customEndpoint2 },
+      { path: 'test3', any: customEndpoint3 },
+    ],
+  }
+];
+
+router.applyRoutes(routes);
+
+router.listen(5550);
+
+// now you can request http://yourapi.com/v1/test?z=test
+```

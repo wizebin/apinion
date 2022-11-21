@@ -1,4 +1,4 @@
-import { getTypeString } from 'objer';
+import { getTypeString } from './getTypeString';
 
 const startingChars = {
   '{': 'json',

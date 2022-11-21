@@ -1,4 +1,4 @@
-import { get, getTypeString } from 'objer';
+import { getTypeString } from './getTypeString';
 
 export class HttpError {
   constructor({ status, message }) {
@@ -9,8 +9,8 @@ export class HttpError {
 }
 
 export function applyHttpError(request, response, error) {
-  const status = get(error, 'status') || 500;
-  const message = get(error, 'message') || 'Uncaught Error Without Message';
+  const status = error?.status || 500;
+  const message = error?.message || 'Uncaught Error Without Message';
 
   response.status(status);
 

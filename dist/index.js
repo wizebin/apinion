@@ -1,10 +1,26 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('objer'), require('express'), require('stream')) :
-  typeof define === 'function' && define.amd ? define(['exports', 'objer', 'express', 'stream'], factory) :
-  (global = global || self, factory(global.apinion = {}, global.objer, global.express, global.stream));
-}(this, (function (exports, objer, express, stream) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('express'), require('stream')) :
+  typeof define === 'function' && define.amd ? define(['exports', 'express', 'stream'], factory) :
+  (global = global || self, factory(global.apinion = {}, global.express, global.stream));
+}(this, (function (exports, express, stream) { 'use strict';
 
   express = express && Object.prototype.hasOwnProperty.call(express, 'default') ? express['default'] : express;
+
+  function _typeof(obj) {
+    "@babel/helpers - typeof";
+
+    if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") {
+      _typeof = function (obj) {
+        return typeof obj;
+      };
+    } else {
+      _typeof = function (obj) {
+        return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+      };
+    }
+
+    return _typeof(obj);
+  }
 
   function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
     try {
@@ -248,6 +264,31 @@
     };
   }
 
+  function getTypeString(data) {
+    var stringType = _typeof(data);
+
+    if (stringType === 'object') {
+      if (data === null) return 'null';
+      var stringified = toString.apply(data);
+
+      if (stringified.length > 2 && stringified[0] === '[' && stringified[stringified.length - 1] === ']') {
+        var splits = stringified.substr(1, stringified.length - 2).split(' ');
+
+        if (splits.length > 1) {
+          return splits.slice(1).join(' ').toLowerCase();
+        }
+      }
+
+      return 'unknown';
+    }
+
+    if (stringType === 'number') {
+      if (isNaN(data)) return 'nan';
+    }
+
+    return stringType;
+  }
+
   var HttpError$1 = function HttpError(_ref) {
     var status = _ref.status,
         message = _ref.message;
@@ -259,12 +300,12 @@
     this.message = message;
   };
   function applyHttpError(request, response, error) {
-    var status = objer.get(error, 'status') || 500;
-    var message = objer.get(error, 'message') || 'Uncaught Error Without Message';
+    var status = (error === null || error === void 0 ? void 0 : error.status) || 500;
+    var message = (error === null || error === void 0 ? void 0 : error.message) || 'Uncaught Error Without Message';
     response.status(status);
     console.log(error);
 
-    if (objer.getTypeString(message) === 'object') {
+    if (getTypeString(message) === 'object') {
       response.json(message);
     } else if (message) {
       response.json({
@@ -540,7 +581,7 @@
   };
   function parseBody(input) {
     if (!input) return null;
-    var inputType = objer.getTypeString(input);
+    var inputType = getTypeString(input);
 
     if (inputType === 'string') {
       var startingType = startingChars[input[0]];
@@ -707,7 +748,8 @@
                   response: response,
                   body: config.noParse ? undefined : request.body,
                   query: request.query,
-                  headers: request.headers
+                  headers: request.headers,
+                  params: Object.assign({}, request.query || {}, request.body || {})
                 };
 
                 if (!config.authenticator) {
@@ -945,6 +987,10 @@
       });
 
       _defineProperty(this, "applyRoutes", function (routes) {
+        if (Array.isArray && !Array.isArray(routes)) {
+          routes = [routes];
+        }
+
         var _iterator = _createForOfIteratorHelper(routes),
             _step;
 
