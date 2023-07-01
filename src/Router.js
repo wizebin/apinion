@@ -15,6 +15,10 @@ export class Router {
     this.routes = {};
   }
 
+  onError = (callback) => {
+    this.onErrorCallback = callback;
+  }
+
   setAuthenticator = (authenticator) => {
     this.authenticator = authenticator;
   }
@@ -65,12 +69,13 @@ export class Router {
       config.authenticator = this.authenticator;
     }
 
-    return responseWrapper(callback, config);
+    return responseWrapper(callback, config, this);
   }
 
   makeRouteDetails = (type, route, config, callback) => {
     const defaultedConfig = config || {};
     const cleanedPath = this.getCleanedSubPath(route);
+    if (!defaultedConfig.route) defaultedConfig.route = cleanedPath;
     this.describeSubroute(cleanedPath, { [type]: defaultedConfig });
     let params = [cleanedPath];
     if (defaultedConfig?.middleware) {

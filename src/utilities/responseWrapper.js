@@ -6,9 +6,9 @@ function getParams(keyList, { body, query }) {
   const missing = [];
   const data = {};
   for (let key of keyList) {
-    if (body?.[key]) {
+    if (body?.[key] !== undefined) {
       data[key] = body[key];
-    } else if (query?.[key]) {
+    } else if (query?.[key] !== undefined) {
       data[key] = query[key];
     } else {
       missing.push(key);
@@ -30,7 +30,7 @@ function collectBody(request) {
  * @param {function} func
  * @param {{ authenticator: function }} config
  */
-export function responseWrapper(func, config) {
+export function responseWrapper(func, config, apinionRouter) {
   return async (request, response) => {
     try {
       if (!config.noParse) {
@@ -69,7 +69,16 @@ export function responseWrapper(func, config) {
         }
       }
     } catch (err) {
-      applyHttpError(request, response, err);
+      try {
+        await config?.onError?.({ error: err, config, request, response });
+        await apinionRouter?.onErrorCallback?.({ error: err, config, request, response });
+      } catch (subError) {
+        console.error(`custom error handler threw error (check your onError handler in your ${config?.route || request.originalUrl} endpoint) (check your apinionRouter.onError function)`, subError);
+      }
+
+      if (!response._headerSent) {
+        applyHttpError(request, response, err);
+      }
     }
   };
 }

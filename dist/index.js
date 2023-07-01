@@ -291,29 +291,37 @@
 
   var HttpError$1 = function HttpError(_ref) {
     var status = _ref.status,
-        message = _ref.message;
+        message = _ref.message,
+        data = _ref.data;
 
     _classCallCheck(this, HttpError);
 
     this.name = 'HTTP Error';
     this.status = status;
     this.message = message;
+    this.data = data;
   };
+  function stringifyError(error) {
+    if (error instanceof Error) {
+      return JSON.stringify(error, Object.getOwnPropertyNames(error));
+    } else {
+      return JSON.stringify(error);
+    }
+  }
   function applyHttpError(request, response, error) {
     var status = (error === null || error === void 0 ? void 0 : error.status) || 500;
     var message = (error === null || error === void 0 ? void 0 : error.message) || 'Uncaught Error Without Message';
+    var data = (error === null || error === void 0 ? void 0 : error.data) || {};
     response.status(status);
-    console.log(error);
 
     if (getTypeString(message) === 'object') {
-      response.json(message);
+      response.json(Object.assign(data, message));
     } else if (message) {
-      response.json({
+      response.json(Object.assign(data, {
         message: message
-      });
+      }));
     } else {
-      var stringified = JSON.stringify(error);
-      response.send(stringified);
+      response.send(stringifyError(error));
     }
   }
 
@@ -684,9 +692,9 @@
       for (_iterator.s(); !(_step = _iterator.n()).done;) {
         var key = _step.value;
 
-        if (body !== null && body !== void 0 && body[key]) {
+        if ((body === null || body === void 0 ? void 0 : body[key]) !== undefined) {
           data[key] = body[key];
-        } else if (query !== null && query !== void 0 && query[key]) {
+        } else if ((query === null || query === void 0 ? void 0 : query[key]) !== undefined) {
           data[key] = query[key];
         } else {
           missing.push(key);
@@ -718,10 +726,10 @@
    */
 
 
-  function responseWrapper(func, config) {
+  function responseWrapper(func, config, apinionRouter) {
     return /*#__PURE__*/function () {
       var _ref2 = _asyncToGenerator( /*#__PURE__*/regeneratorRuntime.mark(function _callee(request, response) {
-        var body, params, _getParams, missing, data, _getParams2, _missing, _data, endpointResponse;
+        var body, params, _getParams, missing, data, _getParams2, _missing, _data, endpointResponse, _config$onError, _apinionRouter$onErro;
 
         return regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
@@ -822,20 +830,50 @@
                   }
                 }
 
-                _context.next = 31;
+                _context.next = 41;
                 break;
 
               case 28:
                 _context.prev = 28;
                 _context.t0 = _context["catch"](0);
-                applyHttpError(request, response, _context.t0);
+                _context.prev = 30;
+                _context.next = 33;
+                return config === null || config === void 0 ? void 0 : (_config$onError = config.onError) === null || _config$onError === void 0 ? void 0 : _config$onError.call(config, {
+                  error: _context.t0,
+                  config: config,
+                  request: request,
+                  response: response
+                });
 
-              case 31:
+              case 33:
+                _context.next = 35;
+                return apinionRouter === null || apinionRouter === void 0 ? void 0 : (_apinionRouter$onErro = apinionRouter.onErrorCallback) === null || _apinionRouter$onErro === void 0 ? void 0 : _apinionRouter$onErro.call(apinionRouter, {
+                  error: _context.t0,
+                  config: config,
+                  request: request,
+                  response: response
+                });
+
+              case 35:
+                _context.next = 40;
+                break;
+
+              case 37:
+                _context.prev = 37;
+                _context.t1 = _context["catch"](30);
+                console.error("custom error handler threw error (check your onError handler in your ".concat((config === null || config === void 0 ? void 0 : config.route) || request.originalUrl, " endpoint) (check your apinionRouter.onError function)"), _context.t1);
+
+              case 40:
+                if (!response._headerSent) {
+                  applyHttpError(request, response, _context.t0);
+                }
+
+              case 41:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[0, 28]]);
+        }, _callee, null, [[0, 28], [30, 37]]);
       }));
 
       return function (_x, _x2) {
@@ -854,6 +892,10 @@
       var _this = this;
 
       _classCallCheck(this, Router);
+
+      _defineProperty(this, "onError", function (callback) {
+        _this.onErrorCallback = callback;
+      });
 
       _defineProperty(this, "setAuthenticator", function (authenticator) {
         _this.authenticator = authenticator;
@@ -916,13 +958,15 @@
           config.authenticator = _this.authenticator;
         }
 
-        return responseWrapper(callback, config);
+        return responseWrapper(callback, config, _this);
       });
 
       _defineProperty(this, "makeRouteDetails", function (type, route, config, callback) {
         var defaultedConfig = config || {};
 
         var cleanedPath = _this.getCleanedSubPath(route);
+
+        if (!defaultedConfig.route) defaultedConfig.route = cleanedPath;
 
         _this.describeSubroute(cleanedPath, _defineProperty({}, type, defaultedConfig));
 

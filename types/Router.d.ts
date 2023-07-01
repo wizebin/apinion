@@ -9,6 +9,8 @@ export class Router {
     expressApp(): () => any;
     baseDirectory: string;
     routes: {};
+    onError: (callback: any) => void;
+    onErrorCallback: any;
     setAuthenticator: (authenticator: any) => void;
     authenticator: any;
     getRoutes: () => {};

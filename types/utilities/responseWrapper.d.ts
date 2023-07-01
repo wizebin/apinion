@@ -5,4 +5,4 @@
  */
 export function responseWrapper(func: Function, config: {
     authenticator: Function;
-}): (request: any, response: any) => Promise<void>;
+}, apinionRouter: any): (request: any, response: any) => Promise<void>;
