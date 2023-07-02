@@ -71,7 +71,7 @@ export function responseWrapper(func, config, apinionRouter) {
     } catch (err) {
       try {
         await config?.onError?.({ error: err, config, request, response });
-        await apinionRouter?.onErrorCallback?.({ error: err, config, request, response });
+        await apinionRouter?.onError?.({ error: err, config, request, response });
       } catch (subError) {
         console.error(`custom error handler threw error (check your onError handler in your ${config?.route || request.originalUrl} endpoint) (check your apinionRouter.onError function)`, subError);
       }
