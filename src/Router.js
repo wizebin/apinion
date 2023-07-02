@@ -15,8 +15,16 @@ export class Router {
     this.routes = {};
   }
 
-  onError = (callback) => {
+  addErrorHandler = (callback) => {
     this.onErrorCallback = callback;
+  }
+
+  onError = (...params) => {
+    if (this.onErrorCallback) {
+      return this.onErrorCallback(...params);
+    } else {
+      this.parent?.onError(...params);
+    }
   }
 
   setAuthenticator = (authenticator) => {

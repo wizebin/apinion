@@ -227,7 +227,7 @@ router.listen(5550);
 import { Router, makeEndpoint } from 'apinion';
 
 const router = new Router();
-router.onError(({ error, config, request, response }) => {
+router.addErrorHandler(({ error, config, request, response }) => {
   console.error('error handling', request.originalUrl, error);
 
   if (error?.status) {
@@ -236,5 +236,8 @@ router.onError(({ error, config, request, response }) => {
     // error must not be an apinion HttpError
     response.status(500).send({ message: 'this is a custom error' });
   }
+
+  // if you want to bubble to parent router
+  // router.parent.onError({ error, config, request, response });
 });
 ```

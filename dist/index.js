@@ -893,8 +893,22 @@
 
       _classCallCheck(this, Router);
 
-      _defineProperty(this, "onError", function (callback) {
+      _defineProperty(this, "addErrorHandler", function (callback) {
         _this.onErrorCallback = callback;
+      });
+
+      _defineProperty(this, "onError", function () {
+        for (var _len = arguments.length, params = new Array(_len), _key = 0; _key < _len; _key++) {
+          params[_key] = arguments[_key];
+        }
+
+        if (_this.onErrorCallback) {
+          return _this.onErrorCallback.apply(_this, params);
+        } else {
+          var _this$parent;
+
+          (_this$parent = _this.parent) === null || _this$parent === void 0 ? void 0 : _this$parent.onError.apply(_this$parent, params);
+        }
       });
 
       _defineProperty(this, "setAuthenticator", function (authenticator) {
