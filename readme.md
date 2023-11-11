@@ -14,7 +14,7 @@ router.enableCors();
 
 router.get('/endpoint', { name: 'name' }, () => {
   return {
-    data: 'this will be returned as json to the end user';
+    data: 'this will be returned as json to the end user'
   };
 });
 
