@@ -27,6 +27,7 @@ module.exports = api => {
       "@babel/plugin-proposal-numeric-separator",
       "@babel/plugin-proposal-throw-expressions",
       "@babel/plugin-syntax-dynamic-import",
+      "@babel/plugin-transform-runtime", // this allows us to use async/await without requiring the caller to import the babel regenerator runtime
     ]
   }
 };

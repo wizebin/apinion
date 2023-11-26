@@ -1,0 +1,15 @@
+{
+  "name": "apinion-sample",
+  "version": "1.0.0",
+  "description": "A simple apinion sample API",
+  "main": "src/index.mjs",
+  "type": "module",
+  "scripts": {
+    "start": "node --experimental-modules src/index.mjs"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "apinion": "file:.."
+  }
+}

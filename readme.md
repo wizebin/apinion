@@ -3,6 +3,45 @@
 
 * Presently this framework is not ready for production use outside of my own projects, proceed at your own risk.
 
+## Quick Start
+
+The fastest way to get started from scratch:
+
+```bash
+mkdir my-api
+cd my-api
+npm init -y
+npm install --save apinion
+```
+
+Then create a file called `index.mjs` with the following contents (or any contents from the examples above):
+
+```javascript
+import { Router } from 'apinion';
+
+const router = new Router();
+
+router.enableCors();
+
+router.get('/', { name: 'root' }, () => {
+  return {
+    hello: 'world',
+  };
+});
+
+router.listen(9166);
+```
+
+Then run `node index.mjs` and you should be able to hit `http://localhost:9166` and see the response.
+
+Consider modifying your package json's scripts to include the start script:
+
+```json
+"scripts": {
+  "start": "node --experimental-modules index.mjs"
+},
+```
+
 ## API Documentation
 
 ```javascript
@@ -233,11 +272,37 @@ router.addErrorHandler(({ error, config, request, response }) => {
   if (error?.status) {
     response.status(error.status).send({ message: error.message || 'unknown error' });
   } else {
-    // error must not be an apinion HttpError
+    // error appears to not be an apinion HttpError
     response.status(500).send({ message: 'this is a custom error' });
   }
 
   // if you want to bubble to parent router
   // router.parent.onError({ error, config, request, response });
 });
+
+router.listen(5550);
+```
+
+## logging
+```javascript
+import { Router, makeEndpoint } from 'apinion';
+
+const router = new Router();
+
+router.use((req, res, next) => {
+  console.log(new Date().toISOString(), req.method, req.url, 'from', req.headers['x-forwarded-for'] || req.connection.remoteAddress);
+  next();
+});
+
+router.listen(5550);
+```
+
+# Troubleshooting
+
+## I'm getting an error about experimental modules
+
+You need to run node with the `--experimental-modules` flag, or add `"type": "module"` to your package.json.
+
+```bash
+node --experimental-modules index.mjs
 ```

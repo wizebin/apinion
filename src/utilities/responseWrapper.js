@@ -31,6 +31,17 @@ function collectBody(request) {
  * @param {{ authenticator: function }} config
  */
 export function responseWrapper(func, config, apinionRouter) {
+  if (typeof func !== 'function') {
+    if (typeof config === 'function') {
+      func = config;
+      config = {};
+
+      // we COULD throw here, but it's perhaps better to just let people do what they want
+    } else {
+      throw new Error('endpoint executor must be a function check config (this happens when you use makeEndpoint inside of a get/post/any, or if you forget the config parameter) ' + JSON.stringify(config));
+    }
+  }
+
   return async (request, response) => {
     try {
       if (!config.noParse) {
