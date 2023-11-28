@@ -11,7 +11,7 @@ The fastest way to get started from scratch:
 mkdir my-api
 cd my-api
 npm init -y
-npm install --save apinion @babel/runtime
+npm install --save apinion
 ```
 
 Then create a file called `index.mjs` with the following contents (or any contents from the examples above):
