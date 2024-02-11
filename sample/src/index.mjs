@@ -30,6 +30,10 @@ router.addResponseCallback(({ request, response, status }) => {
   console.log('response', status, request.originalUrl);
 });
 
+router.addEarlyDisconnectCallback(({ request, response, status }) => {
+  console.log('user disconnected early', status, request.originalUrl);
+});
+
 router.any('documentation', { name: 'documentation' }, () => {
   return Object.keys(router.getRoutes());
 });
@@ -40,6 +44,11 @@ router.get('simulateError', { name: 'simulateError' }, () => {
 
 router.get('simulateHandledReject', { name: 'simulateHandledReject' }, () => {
   return Promise.reject(new Error('handled rejection'));
+});
+
+router.get('longRunning', { name: 'longRunning' }, async () => {
+  await new Promise((resolve) => setTimeout(resolve, 10000));
+  return 'done';
 });
 
 router.applyRoutes(aRouter);

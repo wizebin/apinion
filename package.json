@@ -1,6 +1,6 @@
 {
   "name": "apinion",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Opinionated API framework built on express",
   "homepage": "https://github.com/wizebin/apinion",
   "bugs": {

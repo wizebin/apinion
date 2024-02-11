@@ -44,6 +44,12 @@ export class Router {
     }
   }
 
+  handleEarlyDisconnect = (req, res) => {
+    if (this.onEarlyDisconnectCallback) {
+      this.onEarlyDisconnectCallback(req, res);
+    }
+  }
+
   /**
    * Add a response callback after a request has generated a response, typically used for logging
    * @param {function({ request: express.Request, response: express.Response, status: int }):void} callback
@@ -63,6 +69,29 @@ export class Router {
     }
 
     this.onResponseCallback = callback;
+  }
+
+  /**
+   * Add a response callback in the event that a user disconnects before the response is sent
+   * @param {function({ request: express.Request, response: express.Response }):void} callback
+   */
+  addEarlyDisconnectCallback = (callback) => {
+    if (!this.onEarlyDisconnectCallback) {
+      // only add the middleware once, it will call the callback using our class handleEarlyDisconnect method
+
+      this.earlyDisconnectMiddleFunc = (req, res, next) => {
+        res.on('close', () => {
+          if (!res.headersSent) {
+            this.handleEarlyDisconnect({ request: req, response: res, status: res.statusCode });
+          }
+        });
+        next();
+      };
+
+      this.app.use(this.earlyDisconnectMiddleFunc);
+    }
+
+    this.onEarlyDisconnectCallback = callback;
   }
 
   onError = (...params) => {

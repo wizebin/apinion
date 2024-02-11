@@ -39,6 +39,7 @@ export class Router {
         response: express.Response;
     }) => null;
     handleResponseCallback: (req: any, res: any) => void;
+    handleEarlyDisconnect: (req: any, res: any) => void;
     /**
      * Add a response callback after a request has generated a response, typically used for logging
      * @param {function({ request: express.Request, response: express.Response, status: int }):void} callback
@@ -53,6 +54,19 @@ export class Router {
         request: express.Request;
         response: express.Response;
         status: int;
+    }) => void;
+    /**
+     * Add a response callback in the event that a user disconnects before the response is sent
+     * @param {function({ request: express.Request, response: express.Response }):void} callback
+     */
+    addEarlyDisconnectCallback: (callback: (arg0: {
+        request: express.Request;
+        response: express.Response;
+    }) => void) => void;
+    earlyDisconnectMiddleFunc: (req: any, res: any, next: any) => void;
+    onEarlyDisconnectCallback: (arg0: {
+        request: express.Request;
+        response: express.Response;
     }) => void;
     onError: (...params: any[]) => null;
     handle404: (request: any, response: any) => Promise<void>;

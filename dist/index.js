@@ -702,6 +702,12 @@
         }
       });
 
+      _defineProperty(this, "handleEarlyDisconnect", function (req, res) {
+        if (_this.onEarlyDisconnectCallback) {
+          _this.onEarlyDisconnectCallback(req, res);
+        }
+      });
+
       _defineProperty(this, "addResponseCallback", function (callback) {
         if (!_this.onResponseCallback) {
           // only add the middleware once, it will call the callback using our class handleResponseCallback method
@@ -720,6 +726,28 @@
         }
 
         _this.onResponseCallback = callback;
+      });
+
+      _defineProperty(this, "addEarlyDisconnectCallback", function (callback) {
+        if (!_this.onEarlyDisconnectCallback) {
+          // only add the middleware once, it will call the callback using our class handleEarlyDisconnect method
+          _this.earlyDisconnectMiddleFunc = function (req, res, next) {
+            res.on('close', function () {
+              if (!res.headersSent) {
+                _this.handleEarlyDisconnect({
+                  request: req,
+                  response: res,
+                  status: res.statusCode
+                });
+              }
+            });
+            next();
+          };
+
+          _this.app.use(_this.earlyDisconnectMiddleFunc);
+        }
+
+        _this.onEarlyDisconnectCallback = callback;
       });
 
       _defineProperty(this, "onError", function () {
@@ -1041,7 +1069,7 @@
    * Create an api endpoint object, add to your router with methods like router.get, router.post, etc.
    * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
    * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} executionFunction
-   * @returns
+   * @returns {{ config: any, callback: any }}
    */
   function makeEndpoint(config, executionFunction) {
     return {

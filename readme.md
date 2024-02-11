@@ -300,6 +300,12 @@ router.addResponseCallback(({ request, response, status }) => {
   console.log(new Date().toISOString(), req.method, req.url, 'from', req.headers['x-forwarded-for'] || req.connection.remoteAddress, status);
 });
 
+// request early termination (will not be seen in request end)
+router.addEarlyDisconnectCallback(({ request, response, status }) => {
+  console.log(new Date().toISOString(), 'EARLY TERMINATION', req.method, req.url, 'from', req.headers['x-forwarded-for'] || req.connection.remoteAddress, status);
+});
+
+
 router.listen(5550);
 ```
 
