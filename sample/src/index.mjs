@@ -13,7 +13,11 @@ router.use((req, res, next) => {
 });
 
 router.addErrorHandler(({ error, config, request, response }) => {
-  console.error('error handling', request.originalUrl, error);
+  console.error('error', request.originalUrl, error);
+
+  if (error?.data?.fallthrough) {
+    console.log('boop');
+  }
 
   if (error?.status) {
     response.status(error.status).send({ message: error.message || 'unknown error' });

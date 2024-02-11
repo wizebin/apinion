@@ -736,6 +736,45 @@
         }
       });
 
+      _defineProperty(this, "handle404", /*#__PURE__*/function () {
+        var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee(request, response) {
+          var _this$onError;
+
+          return _regeneratorRuntime.wrap(function _callee$(_context) {
+            while (1) {
+              switch (_context.prev = _context.next) {
+                case 0:
+                  _context.next = 2;
+                  return (_this$onError = _this.onError) === null || _this$onError === void 0 ? void 0 : _this$onError.call(_this, {
+                    error: new HttpError$1({
+                      status: 404,
+                      message: 'No Matching Route',
+                      data: {
+                        fallthrough: true
+                      }
+                    }),
+                    request: request,
+                    response: response
+                  });
+
+                case 2:
+                  if (!response._headerSent) {
+                    response.status(404).send('Not Found');
+                  }
+
+                case 3:
+                case "end":
+                  return _context.stop();
+              }
+            }
+          }, _callee);
+        }));
+
+        return function (_x, _x2) {
+          return _ref.apply(this, arguments);
+        };
+      }());
+
       _defineProperty(this, "setAuthenticator", function (authenticator) {
         _this.authenticator = authenticator;
       });
@@ -946,6 +985,10 @@
             _this.app.removeListener('error', reject);
 
             resolve(results);
+          });
+
+          _this.app.use(function (request, response, next) {
+            _this.handle404(request, response);
           });
 
           _this.app.once('error', reject);

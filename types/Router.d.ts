@@ -55,6 +55,7 @@ export class Router {
         status: int;
     }) => void;
     onError: (...params: any[]) => null;
+    handle404: (request: any, response: any) => Promise<void>;
     setAuthenticator: (authenticator: any) => void;
     authenticator: any;
     getRoutes: () => {};
