@@ -36,7 +36,6 @@ export function makeBasicAuthenticator(getUserFromCredentials) {
     const { headers } = config;
 
     if (!headers.authorization) {
-      console.log(headers);
       throw new HttpError({ status: 401, message: 'Missing Authentication' });
     }
 

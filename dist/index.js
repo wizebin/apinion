@@ -140,19 +140,18 @@
                 headers = config.headers;
 
                 if (headers.authorization) {
-                  _context.next = 4;
+                  _context.next = 3;
                   break;
                 }
 
-                console.log(headers);
                 throw new HttpError$1({
                   status: 401,
                   message: 'Missing Authentication'
                 });
 
-              case 4:
+              case 3:
                 if (!(headers.authorization.toLowerCase().indexOf('basic') !== 0)) {
-                  _context.next = 6;
+                  _context.next = 5;
                   break;
                 }
 
@@ -161,24 +160,24 @@
                   message: 'Incorrect Authentication'
                 });
 
-              case 6:
+              case 5:
                 auth = headers.authorization.replace(/^basic\s+/gi, '');
                 encoded = Buffer.from(auth, 'base64');
                 decoded = encoded.toString('utf-8');
                 colonPosition = decoded.indexOf(':');
                 username = decoded.substring(0, colonPosition);
                 password = decoded.substring(colonPosition + 1);
-                _context.next = 14;
+                _context.next = 13;
                 return getUserFromCredentials({
                   username: username,
                   password: password
                 }, config);
 
-              case 14:
+              case 13:
                 user = _context.sent;
 
                 if (user) {
-                  _context.next = 17;
+                  _context.next = 16;
                   break;
                 }
 
@@ -187,10 +186,10 @@
                   message: 'Incorrect Credentials'
                 });
 
-              case 17:
+              case 16:
                 return _context.abrupt("return", user);
 
-              case 18:
+              case 17:
               case "end":
                 return _context.stop();
             }
@@ -995,6 +994,12 @@
     return Router;
   }();
 
+  /**
+   * Create an api endpoint object, add to your router with methods like router.get, router.post, etc.
+   * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
+   * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} executionFunction
+   * @returns
+   */
   function makeEndpoint(config, executionFunction) {
     return {
       config: config,

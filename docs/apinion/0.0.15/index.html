@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Home - Documentation</title>
+
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css">
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav>
+    <li class="nav-link nav-home-link"><a href="index.html">Home</a></li><li class="nav-heading">Classes</li><li class="nav-heading"><span class="nav-item-type type-class">C</span><span class="nav-item-name"><a href="Router_Router.html">Router</a></span></li><li class="nav-heading"><a href="global.html">Globals</a></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#makeBasicAuthenticator">makeBasicAuthenticator</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#makeBearerTokenAuthenticator">makeBearerTokenAuthenticator</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#makeEndpoint">makeEndpoint</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#makeHardcodedBasicAuthenticator">makeHardcodedBasicAuthenticator</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#makeRequestAuthenticator">makeRequestAuthenticator</a></span></li><li class="nav-item"><span class="nav-item-type type-function">F</span><span class="nav-item-name"><a href="global.html#responseWrapper">responseWrapper</a></span></li>
+</nav>
+
+<div id="main">
+    
+
+    
+
+
+
+    
+
+
+
+
+
+
+
+
+
+    
+
+
+    <section class="readme">
+        <article><h2>APInion</h2>
+<h4>an opinionated API framework built on express</h4>
+<ul>
+<li>Presently this framework is not ready for production use outside of my own projects, proceed at your own risk.</li>
+</ul>
+<h2>Quick Start</h2>
+<p>The fastest way to get started from scratch:</p>
+<pre class="prettyprint source lang-bash"><code>mkdir my-api
+cd my-api
+npm init -y
+npm install --save apinion
+</code></pre>
+<p>Then create a file called <code>index.mjs</code> with the following contents (or any contents from the examples above):</p>
+<pre class="prettyprint source lang-javascript"><code>import { Router } from 'apinion';
+
+const router = new Router();
+
+router.enableCors();
+
+router.get('/', { name: 'root' }, () => {
+  return {
+    hello: 'world',
+  };
+});
+
+router.listen(9166);
+</code></pre>
+<p>Then run <code>node index.mjs</code> and you should be able to hit <code>http://localhost:9166</code> and see the response.</p>
+<p>Consider modifying your package json's scripts to include the start script:</p>
+<pre class="prettyprint source lang-json"><code>&quot;scripts&quot;: {
+  &quot;start&quot;: &quot;node --experimental-modules index.mjs&quot;
+},
+</code></pre>
+<h2>API Documentation</h2>
+<pre class="prettyprint source lang-javascript"><code>import { Router } from 'apinion';
+
+const router = new Router();
+
+router.enableCors();
+
+router.get('/endpoint', { name: 'name' }, () => {
+  return {
+    data: 'this will be returned as json to the end user'
+  };
+});
+
+router.listen(9512);
+</code></pre>
+<h3>helmet recommended</h3>
+<pre class="prettyprint source lang-javascript"><code>import helmet from 'helmet';
+import { Router } from 'apinion';
+
+const router = new Router();
+router.use(helmet());
+
+router.listen(9494);
+</code></pre>
+<h3>using middleware like multer</h3>
+<pre class="prettyprint source lang-javascript"><code>import multer from 'multer';
+import { Router } from 'apinion';
+
+const router = new Router();
+
+router.get('/upload', { middleware: multer({ dest: '/tmp/' }).single('File') }, ({ request }) => {
+  // do whatever you want with request.file, request.file.path contains the temporary file path
+});
+
+router.listen(5934);
+</code></pre>
+<h3>using router arrays</h3>
+<pre class="prettyprint source lang-javascript"><code>import { Router, makeEndpoint } from 'apinion';
+
+const router = new Router();
+const endpoint = {
+  config: { required: ['secret'] },
+  callback: ({ required }) => {
+    return 'your secret is ' + required.secret;
+  }
+};
+
+const anotherEndpoint = makeEndpoint({ name: 'test' }, () => {
+  return [1, 2, 3];
+});
+
+const routeArray = [
+  { path: 'v1', subrouter: [
+    { path: '/some_secret', get: endpoint },
+    { path: '/inline', any: { config: { name: 'hi' }, callback: () => 'inline created' } },
+  ]},
+  { path: '/test', get: anotherEndpoint },
+];
+
+router.applyRoutes(routeArray);
+</code></pre>
+<p>now you can hit <code>yourapi/v1/some_secret?secret=hi</code> and <code>yourapi/test</code></p>
+<h3>promises</h3>
+<ul>
+<li>promises are accepted as endpoint callbacks</li>
+</ul>
+<pre class="prettyprint source lang-javascript"><code>import { Router } from 'apinion';
+
+const router = new Router();
+
+router.post('/async', {}, () => {
+  return new Promise((resolve) => {
+    setTimeout(() => resolve('this took a second'), 1000);
+  });
+});
+
+router.listen(4495);
+</code></pre>
+<h2>authentication</h2>
+<ul>
+<li>You can require authentication functions on a subrouter or on individual endpoints</li>
+</ul>
+<h4>subrouter authentication:</h4>
+<pre class="prettyprint source lang-javascript"><code>import { Router, HttpError } from 'apinion';
+
+const router = new Router();
+const adminSubrouter = router.subrouter('/admin');
+const users = {
+  jerry: { username: 'jerry', password: 'friar', admin: true },
+  bob: { username: 'bob', password: 'friar', admin: false },
+};
+
+adminSubrouter.setAuthenticator(({ request, body, query, headers }) => {
+  const usable = body || query;
+  const user = users[usable?.username];
+  if (!user || user?.password !== usable?.password) {
+    throw new HttpError({ status: 401, message: 'Bad creds' });
+  }
+  if (!user?.admin) {
+    throw new HttpError({ status: 403, message: 'Not allowed' });
+  }
+  return user;
+});
+
+adminSubrouter.get('/hi', { name: 'super secret admin thing', secret: true }, ({ identity, body }) => {
+  return { identity, body };
+});
+
+router.listen(10583);
+</code></pre>
+<h4>endpoint authentication:</h4>
+<pre class="prettyprint source lang-javascript"><code>import { Router, makeHardcodedBasicAuthenticator } from 'apinion';
+
+const router = new Router();
+const tempAuthenticator = makeHardcodedBasicAuthenticator([{ username: 'joe', password: 'doe' }]);
+
+router.get('/auth', { authenticator: tempAuthenticator }, ({ identity }) => {
+  return identity;
+});
+
+router.listen(5550);
+</code></pre>
+<h2>streaming post body</h2>
+<ul>
+<li>use <code>noParse</code> to prevent the input from being automatically parsed, in this mode the body parameter is guaranteed to be undefined</li>
+</ul>
+<pre class="prettyprint source lang-javascript"><code>import { Router, makeHardcodedBasicAuthenticator } from 'apinion';
+import fs from 'fs';
+
+const router = new Router();
+
+router.get('/streamable', { noParse: true }, ({ request }) => {
+  const destination = fs.createWriteStream('filename.ext');
+  request.pipe(destination);
+  return new Promise(resolve => {
+    destination.on('finish', () => {
+      resolve({ message: 'wrote file', filename: 'filename.ext' });
+    });
+  });
+});
+
+router.listen(5550);
+</code></pre>
+<h2>combined parameters and custom request auth:</h2>
+<pre class="prettyprint source lang-javascript"><code>import { Router, makeRequestAuthenticator } from 'apinion';
+
+const router = new Router();
+const tempAuthenticator = makeRequestAuthenticator((input) => {
+  if (input?.headers?.secret === 'fancypants') return { admin: true };
+
+  return null;
+});
+
+router.get('/paramtest', { authenticator: tempAuthenticator, required: ['a', 'b'], optional: ['c'] }, ({ identity, params }) => {
+  if (identity?.admin) {
+    return params.a + params.b + params.c;
+  } else {
+    return params.a;
+  }
+});
+
+router.listen(5550);
+</code></pre>
+<h2>makeEndpoint:</h2>
+<pre class="prettyprint source lang-javascript"><code>import { Router, makeEndpoint } from 'apinion';
+
+const router = new Router();
+
+const customEndpoint = makeEndpoint({ name: 'custom', required: ['z'] }, async (params) => {
+  return { something: 'another' };
+});
+
+const customEndpoint2 = makeEndpoint({ name: 'custom2' }, async (params) => {
+  return { message: 'hola' };
+});
+
+const customEndpoint3 = makeEndpoint({ name: 'custom3' }, async (params) => {
+  return { action: 'do the thing' };
+});
+
+const routes = [
+  {
+    path: 'v1',
+    subrouter: [
+      { path: 'test', get: customEndpoint },
+      { path: 'test2', post: customEndpoint2 },
+      { path: 'test3', any: customEndpoint3 },
+    ],
+  }
+];
+
+router.applyRoutes(routes);
+
+router.listen(5550);
+
+// now you can request http://yourapi.com/v1/test?z=test
+</code></pre>
+<h2>custom error handling</h2>
+<pre class="prettyprint source lang-javascript"><code>import { Router, makeEndpoint } from 'apinion';
+
+const router = new Router();
+router.addErrorHandler(({ error, config, request, response }) => {
+  console.error('error handling', request.originalUrl, error);
+
+  if (error?.status) {
+    response.status(error.status).send({ message: error.message || 'unknown error' });
+  } else {
+    // error appears to not be an apinion HttpError
+    response.status(500).send({ message: 'this is a custom error' });
+  }
+
+  // if you want to bubble to parent router
+  // router.parent.onError({ error, config, request, response });
+});
+
+router.listen(5550);
+</code></pre>
+<h2>logging</h2>
+<pre class="prettyprint source lang-javascript"><code>import { Router, makeEndpoint } from 'apinion';
+
+const router = new Router();
+
+// request start
+router.use((req, res, next) => {
+  console.log(new Date().toISOString(), req.method, req.url, 'from', req.headers['x-forwarded-for'] || req.connection.remoteAddress);
+  next();
+});
+
+// request end
+router.addResponseCallback(({ request, response, status }) => {
+  console.log(new Date().toISOString(), req.method, req.url, 'from', req.headers['x-forwarded-for'] || req.connection.remoteAddress, status);
+});
+
+router.listen(5550);
+</code></pre>
+<h1>Troubleshooting</h1>
+<h2>I'm getting an error about experimental modules</h2>
+<p>You need to run node with the <code>--experimental-modules</code> flag, or add <code>&quot;type&quot;: &quot;module&quot;</code> to your package.json.</p>
+<pre class="prettyprint source lang-bash"><code>node --experimental-modules index.mjs
+</code></pre></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<br class="clear">
+
+<footer>
+    Generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.6</a> on Sun Feb 11 2024 11:42:31 GMT-0500 (Eastern Standard Time) using the Minami theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/linenumber.js"></script>
+</body>
+</html>
