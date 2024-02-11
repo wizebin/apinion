@@ -22,8 +22,20 @@ router.addErrorHandler(({ error, config, request, response }) => {
   }
 });
 
+router.addResponseCallback(({ request, response, status }) => {
+  console.log('response', status, request.originalUrl);
+});
+
 router.any('documentation', { name: 'documentation' }, () => {
   return Object.keys(router.getRoutes());
+});
+
+router.get('simulateError', { name: 'simulateError' }, () => {
+  fakeFunction();
+});
+
+router.get('simulateHandledReject', { name: 'simulateHandledReject' }, () => {
+  return Promise.reject(new Error('handled rejection'));
 });
 
 router.applyRoutes(aRouter);

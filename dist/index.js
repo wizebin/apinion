@@ -85,8 +85,10 @@
   function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
   /**
    * pass an array of users with usernames and passwords, any additional data included in the subobjects will be passed in as well as the identity parameter into your endpoint
-   * @param {[{ username: string, password: string }]} users
-   */
+   * we recommend strongly that you do not use this, we provide this as an early development tool but you should use a request authenticator or a bearer token authenticator
+   * @param {Array.<{ username: string, password: string }>} users
+   * @returns function
+   **/
 
   function makeHardcodedBasicAuthenticator(users) {
     var usersByUsername = {};
@@ -119,15 +121,23 @@
 
     return makeBasicAuthenticator(getUser);
   }
-  function makeBasicAuthenticator(getUserFromCredentialsFunction) {
+  /**
+   * When you use this authenticator, the user's request will be rejected if they don't include the authorization header, or if their auth header is malformed, or if your callback function does not return an identity
+   * This function handles base64 decoding and splitting the username and password
+   * Your callback function should return an identity structure for you to use in your endpoint handler, or null if the user is not authenticated
+   * @param {function({ username: string, password: string }, { request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any} getUserFromCredentials
+   * @returns function
+   */
+
+  function makeBasicAuthenticator(getUserFromCredentials) {
     return /*#__PURE__*/function () {
-      var _ref3 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee(_ref2) {
+      var _ref2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee(config) {
         var headers, auth, encoded, decoded, colonPosition, username, password, user;
         return _regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                headers = _ref2.headers;
+                headers = config.headers;
 
                 if (headers.authorization) {
                   _context.next = 4;
@@ -156,28 +166,19 @@
                 encoded = Buffer.from(auth, 'base64');
                 decoded = encoded.toString('utf-8');
                 colonPosition = decoded.indexOf(':');
-                username = decoded.substr(0, colonPosition);
-                password = decoded.substr(colonPosition + 1);
+                username = decoded.substring(0, colonPosition);
+                password = decoded.substring(colonPosition + 1);
                 _context.next = 14;
-                return getUserFromCredentialsFunction({
+                return getUserFromCredentials({
                   username: username,
                   password: password
-                });
+                }, config);
 
               case 14:
                 user = _context.sent;
-                console.log({
-                  auth: auth,
-                  encoded: encoded,
-                  decoded: decoded,
-                  colonPosition: colonPosition,
-                  username: username,
-                  password: password,
-                  user: user
-                });
 
                 if (user) {
-                  _context.next = 18;
+                  _context.next = 17;
                   break;
                 }
 
@@ -186,10 +187,10 @@
                   message: 'Incorrect Credentials'
                 });
 
-              case 18:
+              case 17:
                 return _context.abrupt("return", user);
 
-              case 19:
+              case 18:
               case "end":
                 return _context.stop();
             }
@@ -198,20 +199,27 @@
       }));
 
       return function (_x) {
-        return _ref3.apply(this, arguments);
+        return _ref2.apply(this, arguments);
       };
     }();
   }
 
+  /**
+   * When you use this authenticator, the user's request will be rejected if they don't include the authorization header, or if their auth header is malformed, or if your callback function does not return an identity
+   * Your callback function should return an identity structure for you to use in your endpoint handler, or null if the user is not authenticated
+   * @param {function({ token: string, config: { request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any} getUserFromBearerFunction
+   * @returns function
+   */
+
   function makeBearerTokenAuthenticator(getUserFromBearerFunction) {
     return /*#__PURE__*/function () {
-      var _ref2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee(_ref) {
+      var _ref = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee(config) {
         var headers, token, identity;
         return _regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
-                headers = _ref.headers;
+                headers = config.headers;
 
                 if (headers.authorization) {
                   _context.next = 3;
@@ -237,7 +245,7 @@
               case 5:
                 token = headers.authorization.replace(/^bearer\s+/gi, '');
                 _context.next = 8;
-                return getUserFromBearerFunction(token);
+                return getUserFromBearerFunction(token, config);
 
               case 8:
                 identity = _context.sent;
@@ -264,10 +272,16 @@
       }));
 
       return function (_x) {
-        return _ref2.apply(this, arguments);
+        return _ref.apply(this, arguments);
       };
     }();
   }
+
+  /**
+   * Create an authenticator to be used in your endpoints, this authenticator can be async and should return the identity you want to use in your endpoint. identity is passed as a part of the object to your endpoint handler
+   * @param {function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any} getUserFromRequest
+   * @returns function
+   */
 
   function makeRequestAuthenticator(getUserFromRequest) {
     return /*#__PURE__*/function () {
@@ -670,7 +684,7 @@
   function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
   var Router = /*#__PURE__*/function () {
     /**
-     * @param {express} expressApp
+     * @param {express} app
      * @param {Router} parent
      * @param {string} baseDirectory
      */
@@ -681,6 +695,32 @@
 
       _defineProperty(this, "addErrorHandler", function (callback) {
         _this.onErrorCallback = callback;
+      });
+
+      _defineProperty(this, "handleResponseCallback", function (req, res) {
+        if (_this.onResponseCallback) {
+          _this.onResponseCallback(req, res);
+        }
+      });
+
+      _defineProperty(this, "addResponseCallback", function (callback) {
+        if (!_this.onResponseCallback) {
+          // only add the middleware once, it will call the callback using our class handleResponseCallback method
+          _this.responseMiddleFunc = function (req, res, next) {
+            res.on('finish', function () {
+              _this.handleResponseCallback({
+                request: req,
+                response: res,
+                status: res.statusCode
+              });
+            });
+            next();
+          };
+
+          _this.app.use(_this.responseMiddleFunc);
+        }
+
+        _this.onResponseCallback = callback;
       });
 
       _defineProperty(this, "onError", function () {
@@ -741,7 +781,7 @@
       });
 
       _defineProperty(this, "subrouter", function (subdirectory) {
-        var subRouter = new Router(_this.expressApp, _this, _this.getCleanedSubPath(subdirectory));
+        var subRouter = new Router(_this.app, _this, _this.getCleanedSubPath(subdirectory));
         subRouter.setAuthenticator(_this.authenticator);
 
         _this.describeSubroute(subdirectory, {
@@ -781,53 +821,57 @@
       });
 
       _defineProperty(this, "get", function (route, config, callback) {
-        var _this$expressApp;
+        var _this$app;
 
-        return (_this$expressApp = _this.expressApp).get.apply(_this$expressApp, _toConsumableArray(_this.makeRouteDetails('get', route, config, callback)));
+        return (_this$app = _this.app).get.apply(_this$app, _toConsumableArray(_this.makeRouteDetails('get', route, config, callback)));
       });
 
       _defineProperty(this, "post", function (route, config, callback) {
-        var _this$expressApp2;
+        var _this$app2;
 
-        return (_this$expressApp2 = _this.expressApp).post.apply(_this$expressApp2, _toConsumableArray(_this.makeRouteDetails('post', route, config, callback)));
+        return (_this$app2 = _this.app).post.apply(_this$app2, _toConsumableArray(_this.makeRouteDetails('post', route, config, callback)));
       });
 
       _defineProperty(this, "put", function (route, config, callback) {
-        var _this$expressApp3;
+        var _this$app3;
 
-        return (_this$expressApp3 = _this.expressApp).put.apply(_this$expressApp3, _toConsumableArray(_this.makeRouteDetails('put', route, config, callback)));
+        return (_this$app3 = _this.app).put.apply(_this$app3, _toConsumableArray(_this.makeRouteDetails('put', route, config, callback)));
       });
 
       _defineProperty(this, "patch", function (route, config, callback) {
-        var _this$expressApp4;
+        var _this$app4;
 
-        return (_this$expressApp4 = _this.expressApp).patch.apply(_this$expressApp4, _toConsumableArray(_this.makeRouteDetails('patch', route, config, callback)));
+        return (_this$app4 = _this.app).patch.apply(_this$app4, _toConsumableArray(_this.makeRouteDetails('patch', route, config, callback)));
       });
 
       _defineProperty(this, "delete", function (route, config, callback) {
-        var _this$expressApp5;
+        var _this$app5;
 
-        return (_this$expressApp5 = _this.expressApp)["delete"].apply(_this$expressApp5, _toConsumableArray(_this.makeRouteDetails('delete', route, config, callback)));
+        return (_this$app5 = _this.app)["delete"].apply(_this$app5, _toConsumableArray(_this.makeRouteDetails('delete', route, config, callback)));
       });
 
       _defineProperty(this, "options", function (route, config, callback) {
-        var _this$expressApp6;
+        var _this$app6;
 
-        return (_this$expressApp6 = _this.expressApp).options.apply(_this$expressApp6, _toConsumableArray(_this.makeRouteDetails('options', route, config, callback)));
+        return (_this$app6 = _this.app).options.apply(_this$app6, _toConsumableArray(_this.makeRouteDetails('options', route, config, callback)));
       });
 
       _defineProperty(this, "any", function (route, config, callback) {
-        var _this$expressApp7, _this$expressApp8, _this$expressApp9, _this$expressApp10, _this$expressApp11, _this$expressApp12;
+        var _this$app7, _this$app8, _this$app9, _this$app10, _this$app11, _this$app12;
 
         var params = _this.makeRouteDetails('any', route, config, callback);
 
-        return [(_this$expressApp7 = _this.expressApp).get.apply(_this$expressApp7, _toConsumableArray(params)), (_this$expressApp8 = _this.expressApp).put.apply(_this$expressApp8, _toConsumableArray(params)), (_this$expressApp9 = _this.expressApp).post.apply(_this$expressApp9, _toConsumableArray(params)), (_this$expressApp10 = _this.expressApp).patch.apply(_this$expressApp10, _toConsumableArray(params)), (_this$expressApp11 = _this.expressApp)["delete"].apply(_this$expressApp11, _toConsumableArray(params)), (_this$expressApp12 = _this.expressApp).options.apply(_this$expressApp12, _toConsumableArray(params))];
+        return [(_this$app7 = _this.app).get.apply(_this$app7, _toConsumableArray(params)), (_this$app8 = _this.app).put.apply(_this$app8, _toConsumableArray(params)), (_this$app9 = _this.app).post.apply(_this$app9, _toConsumableArray(params)), (_this$app10 = _this.app).patch.apply(_this$app10, _toConsumableArray(params)), (_this$app11 = _this.app)["delete"].apply(_this$app11, _toConsumableArray(params)), (_this$app12 = _this.app).options.apply(_this$app12, _toConsumableArray(params))];
       });
 
-      _defineProperty(this, "use", function () {
-        var _this$expressApp13;
+      _defineProperty(this, "use", function (func) {
+        var _this$app13;
 
-        (_this$expressApp13 = _this.expressApp).use.apply(_this$expressApp13, arguments);
+        for (var _len2 = arguments.length, passthrough = new Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+          passthrough[_key2 - 1] = arguments[_key2];
+        }
+
+        (_this$app13 = _this.app).use.apply(_this$app13, [func].concat(passthrough));
       });
 
       _defineProperty(this, "applyRoutes", function (routes) {
@@ -877,13 +921,13 @@
         var origin = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '*';
         var headers = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'Origin, X-Requested-With, Content-Type, Accept, Authorization';
 
-        _this.expressApp.use(function (req, res, next) {
+        _this.app.use(function (req, res, next) {
           res.header('Access-Control-Allow-Origin', origin);
           res.header('Access-Control-Allow-Headers', headers);
           next();
         });
 
-        _this.expressApp.options('*', function (request, result) {
+        _this.app.options('*', function (request, result) {
           return result.status(200).send();
         });
       });
@@ -896,37 +940,55 @@
 
       _defineProperty(this, "listen", function (port, callback) {
         return new Promise(function (resolve, reject) {
-          _this.connection = _this.expressApp.listen(port, function (results) {
+          _this.connection = _this.app.listen(port, function (results) {
             console.log('listening on port', port);
             callback === null || callback === void 0 ? void 0 : callback(results);
 
-            _this.expressApp.removeListener('error', reject);
+            _this.app.removeListener('error', reject);
 
             resolve(results);
           });
 
-          _this.expressApp.once('error', reject);
+          _this.app.once('error', reject);
 
           _this.connection.keepAliveTimeout = 60 * 1000;
           _this.connection.headersTimeout = 61 * 1000;
         });
       });
 
+      /**
+       * @type {Router}
+       * @public
+       * @readonly
+       * @description The parent router
+      **/
       this.parent = parent;
-      this.expressApp = expressApp || express();
+      /**
+       * Express application
+       * @type {express.Express}
+       * @public
+       */
+
+      this.app = expressApp || express();
       this.baseDirectory = baseDirectory;
       this.routes = {};
     }
+    /**
+     * When an uncaught error is thrown, or an promise is rejected and unhandled, this function will be called. If you want to respond with a custom error you can do so here, we recommend passing through any HttpErrors using something like
+     * if (error instanceof HttpError) return response.status(error.status).send(error.message)
+     * This is where you want to setup logging, generally 500 errors at least should be logged
+     * @param {function({ error: Error, config: Object, request: express.Request, response: express.Response }):null} callback
+     */
+
 
     _createClass(Router, [{
       key: "expressApp",
+
+      /**
+       * @returns {express.Express}
+       */
       value: function expressApp() {
-        return this.expressApp;
-      }
-    }, {
-      key: "expressConnection",
-      value: function expressConnection() {
-        return this.expressConnection;
+        return this.app;
       }
     }]);
 

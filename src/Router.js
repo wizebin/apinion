@@ -4,19 +4,64 @@ import { responseWrapper } from './utilities/responseWrapper';
 
 export class Router {
   /**
-   * @param {express} expressApp
+   * @param {express} app
    * @param {Router} parent
    * @param {string} baseDirectory
    */
   constructor(expressApp, parent, baseDirectory) {
+
+    /**
+     * @type {Router}
+     * @public
+     * @readonly
+     * @description The parent router
+    **/
     this.parent = parent;
-    this.expressApp = expressApp || express();
+    /**
+     * Express application
+     * @type {express.Express}
+     * @public
+     */
+    this.app = expressApp || express();
     this.baseDirectory = baseDirectory;
     this.routes = {};
   }
 
+  /**
+   * When an uncaught error is thrown, or an promise is rejected and unhandled, this function will be called. If you want to respond with a custom error you can do so here, we recommend passing through any HttpErrors using something like
+   * if (error instanceof HttpError) return response.status(error.status).send(error.message)
+   * This is where you want to setup logging, generally 500 errors at least should be logged
+   * @param {function({ error: Error, config: Object, request: express.Request, response: express.Response }):null} callback
+   */
   addErrorHandler = (callback) => {
     this.onErrorCallback = callback;
+  }
+
+  handleResponseCallback = (req, res) => {
+    if (this.onResponseCallback) {
+      this.onResponseCallback(req, res);
+    }
+  }
+
+  /**
+   * Add a response callback after a request has generated a response, typically used for logging
+   * @param {function({ request: express.Request, response: express.Response, status: int }):void} callback
+   */
+  addResponseCallback = (callback) => {
+    if (!this.onResponseCallback) {
+      // only add the middleware once, it will call the callback using our class handleResponseCallback method
+
+      this.responseMiddleFunc = (req, res, next) => {
+        res.on('finish', () => {
+          this.handleResponseCallback({ request: req, response: res, status: res.statusCode });
+        });
+        next();
+      };
+
+      this.app.use(this.responseMiddleFunc);
+    }
+
+    this.onResponseCallback = callback;
   }
 
   onError = (...params) => {
@@ -66,7 +111,7 @@ export class Router {
   }
 
   subrouter = (subdirectory) => {
-    const subRouter = new Router(this.expressApp, this, this.getCleanedSubPath(subdirectory));
+    const subRouter = new Router(this.app, this, this.getCleanedSubPath(subdirectory));
     subRouter.setAuthenticator(this.authenticator);
     this.describeSubroute(subdirectory, { subrouter: subRouter });
     return subRouter;
@@ -93,39 +138,103 @@ export class Router {
     return params;
   }
 
+  /**
+   * Add a route that responds to GET requests, body will never be filled
+   * create your authenticator with one of the maxXXXAuthenticator functions, or create a custom function throwing an HttpError or returning an identity
+   * @param {string|RegExp} route
+   * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
+   * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} callback
+   */
   get = (route, config, callback) => {
-    return this.expressApp.get(...this.makeRouteDetails('get', route, config, callback));
+    return this.app.get(...this.makeRouteDetails('get', route, config, callback));
   }
+
+  /**
+   * Add a route that responds to POST requests, body will never be filled
+   * create your authenticator with one of the maxXXXAuthenticator functions, or create a custom function throwing an HttpError or returning an identity
+   * @param {string|RegExp} route
+   * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
+   * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} callback
+   */
   post = (route, config, callback) => {
-    return this.expressApp.post(...this.makeRouteDetails('post', route, config, callback));
+    return this.app.post(...this.makeRouteDetails('post', route, config, callback));
   }
+
+  /**
+   * Add a route that responds to PUT requests
+   * create your authenticator with one of the maxXXXAuthenticator functions, or create a custom function throwing an HttpError or returning an identity
+   * @param {string|RegExp} route
+   * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
+   * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} callback
+   */
   put = (route, config, callback) => {
-    return this.expressApp.put(...this.makeRouteDetails('put', route, config, callback));
+    return this.app.put(...this.makeRouteDetails('put', route, config, callback));
   }
+
+  /**
+   * Add a route that responds to PATCH requests
+   * create your authenticator with one of the maxXXXAuthenticator functions, or create a custom function throwing an HttpError or returning an identity
+   * @param {string|RegExp} route
+   * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
+   * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} callback
+   */
   patch = (route, config, callback) => {
-    return this.expressApp.patch(...this.makeRouteDetails('patch', route, config, callback));
+    return this.app.patch(...this.makeRouteDetails('patch', route, config, callback));
   }
+
+  /**
+   * Add a route that responds to DELETE requests
+   * create your authenticator with one of the maxXXXAuthenticator functions, or create a custom function throwing an HttpError or returning an identity
+   * @param {string|RegExp} route
+   * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
+   * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} callback
+   */
   delete = (route, config, callback) => {
-    return this.expressApp.delete(...this.makeRouteDetails('delete', route, config, callback));
+    return this.app.delete(...this.makeRouteDetails('delete', route, config, callback));
   }
+
+  /**
+   * Add a route that responds to OPTIONS requests, if you run enableCors this will be handled automatically
+   * create your authenticator with one of the maxXXXAuthenticator functions, or create a custom function throwing an HttpError or returning an identity
+   * @param {string|RegExp} route
+   * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
+   * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} callback
+   */
   options = (route, config, callback) => {
-    return this.expressApp.options(...this.makeRouteDetails('options', route, config, callback));
+    return this.app.options(...this.makeRouteDetails('options', route, config, callback));
   }
+
+  /**
+   * Add a route that responds to ANY requests, GET, POST, PUT, PATCH, DELETE, OPTIONS
+   * create your authenticator with one of the maxXXXAuthenticator functions, or create a custom function throwing an HttpError or returning an identity
+   * @param {string|RegExp} route
+   * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
+   * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} callback
+   */
   any = (route, config, callback) => {
     const params = this.makeRouteDetails('any', route, config, callback);
 
     return [
-      this.expressApp.get(...params),
-      this.expressApp.put(...params),
-      this.expressApp.post(...params),
-      this.expressApp.patch(...params),
-      this.expressApp.delete(...params),
-      this.expressApp.options(...params),
+      this.app.get(...params),
+      this.app.put(...params),
+      this.app.post(...params),
+      this.app.patch(...params),
+      this.app.delete(...params),
+      this.app.options(...params),
     ];
   }
-  use = (...passthrough) => {
-    this.expressApp.use(...passthrough);
+
+  /**
+   * @param {express.RequestHandler} func
+   * @param  {...any} passthrough
+   */
+  use = (func, ...passthrough) => {
+    this.app.use(func, ...passthrough);
   }
+
+  /**
+   * @param {Array.<{ path, executor, get, options, delete: deleteRoute, patch, post, put, subrouter, any }>} routes
+   */
   applyRoutes = (routes) => {
     if (Array.isArray && !Array.isArray(routes)) {
       routes = [routes];
@@ -148,19 +257,20 @@ export class Router {
       }
     }
   }
+
+  /**
+   * @returns {express.Express}
+   */
   expressApp() {
-    return this.expressApp;
-  }
-  expressConnection() {
-    return this.expressConnection;
+    return this.app;
   }
   enableCors = (origin = '*', headers = 'Origin, X-Requested-With, Content-Type, Accept, Authorization') => {
-    this.expressApp.use((req, res, next) => {
+    this.app.use((req, res, next) => {
       res.header('Access-Control-Allow-Origin', origin);
       res.header('Access-Control-Allow-Headers', headers);
       next();
     });
-    this.expressApp.options('*', (request, result) => result.status(200).send());
+    this.app.options('*', (request, result) => result.status(200).send());
   }
   close = () => {
     if (this.connection) {
@@ -169,13 +279,13 @@ export class Router {
   }
   listen = (port, callback) => {
     return new Promise((resolve, reject) => {
-      this.connection = this.expressApp.listen(port, (results) => {
+      this.connection = this.app.listen(port, (results) => {
         console.log('listening on port', port);
         callback?.(results);
-        this.expressApp.removeListener('error', reject)
+        this.app.removeListener('error', reject)
         resolve(results);
       });
-      this.expressApp.once('error', reject);
+      this.app.once('error', reject);
       this.connection.keepAliveTimeout = 60 * 1000;
       this.connection.headersTimeout = 61 * 1000;
     });

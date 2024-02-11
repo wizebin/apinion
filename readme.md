@@ -289,9 +289,15 @@ import { Router, makeEndpoint } from 'apinion';
 
 const router = new Router();
 
+// request start
 router.use((req, res, next) => {
   console.log(new Date().toISOString(), req.method, req.url, 'from', req.headers['x-forwarded-for'] || req.connection.remoteAddress);
   next();
+});
+
+// request end
+router.addResponseCallback(({ request, response, status }) => {
+  console.log(new Date().toISOString(), req.method, req.url, 'from', req.headers['x-forwarded-for'] || req.connection.remoteAddress, status);
 });
 
 router.listen(5550);
