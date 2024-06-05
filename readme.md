@@ -313,9 +313,42 @@ router.listen(5550);
 
 We recommend installing the 'ws' package to help handle the specifics, here's how you integrate that package:
 
+### For one specific endpoint
+
 ```javascript
-import { Server as WebSocketServer } from 'ws'; // COMMONJS
-// import { WebSocketServer } from 'ws'; // ESM/MJS
+import { Router } from 'apinion';
+import { WebSocketServer } from 'ws';
+
+const router = new Router();
+
+// you can of course use any authenticator, and use the identity in your function body
+router.any('/connect_sock', {}, ({ request }) => {
+  const { socket } = request;
+
+  return new Promise((resolve, reject) => {
+    const websockServer = new WebSocketServer({ noServer: true });
+
+    websockServer.handleUpgrade(request, socket, Buffer.alloc(0), (ws) => {
+      ws.on('message', (message) => {
+        console.log('received: %s', message);
+        ws.send(`echoing to ${identity.username}: ${message}`, { mask: true });
+      });
+
+      ws.on('close', () => {
+        console.log('Client disconnected');
+
+        resolve({ message: 'disconnected'});
+      });
+    });
+  });
+});
+
+```
+
+### For the whole server
+
+```javascript
+import { WebSocketServer } from 'ws';
 import { Router } from 'apinion';
 
 const router = new Router();
@@ -323,7 +356,7 @@ const router = new Router();
 const websockServer = new WebSocketServer({ noServer: true });
 
 router.upgrade((request, socket, head) => {
-  // perform your authentication here
+  // perform your authentication here, keep in mind you have no express response available, so you will have to manually create a response and send it via socket.write
   const authData = { client_id: 123 };
 
   websockServer.handleUpgrade(request, socket, head, (ws) => {
