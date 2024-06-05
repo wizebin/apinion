@@ -1,10 +1,11 @@
-import { Router, makeEndpoint } from 'apinion';
+import { Router, makeBasicAuthenticator, makeEndpoint, gatherAuthParams, HttpError } from 'apinion';
 import aRouter from './endpoints/subrouterTypeA/aRouter.mjs';
 import basicAuth from './endpoints/basicAuth.mjs';
 import customAuth from './endpoints/customAuth.mjs';
 // import ws from 'ws'; // for non ESM
 // const WebSocketServer = ws.Server // for non ESM
 import { WebSocketServer } from 'ws'
+import { ServerResponse } from 'http';
 
 const router = new Router();
 
@@ -63,21 +64,36 @@ router.applyRoutes([{
   ],
 }])
 
-const websockServer = new WebSocketServer({ noServer: true });
+const socketAuth = makeBasicAuthenticator(({ username, password }) => {
+  if (username === 'test' && password === 'test') {
+    return { username };
+  }
 
-router.upgrade((request, socket, head) => {
-  // perform your authentication here
-  const extraAttachmentData = { client_id: 123 };
+  return null;
+});
 
-  websockServer.handleUpgrade(request, socket, head, (ws) => {
-    ws.on('message', (message) => {
-      console.log(extraAttachmentData.client_id, 'received: %s', message);
+router.any('sockme', { authenticator: socketAuth }, ({
+  identity,
+  request,
+}) => {
+  const socket = request.socket;
+
+  return new Promise((resolve, reject) => {
+    const websockServer = new WebSocketServer({ noServer: true });
+
+    websockServer.handleUpgrade(request, socket, Buffer.alloc(0), (ws) => {
+      ws.on('message', (message) => {
+        console.log(identity.username, 'received: %s', message);
+        ws.send(`echoing to ${identity.username}: ${message}`, { mask: true });
+      });
+
+      ws.on('close', () => {
+        console.log(identity.username, 'Client disconnected');
+
+        resolve({ message: 'disconnected'});
+      });
     });
-
-    ws.on('close', () => {
-      console.log(extraAttachmentData.client_id, 'Client disconnected');
-    });
-  });
+  })
 });
 
 console.log('starting server at http://localhost:5550/');

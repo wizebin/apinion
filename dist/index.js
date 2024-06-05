@@ -506,11 +506,54 @@
     });
   }
   /**
+   * Gather required input parameters for an authenticator body, useful for implementing auth in websocket upgrade requests
+   * @param {{ request: Express.Request, response: Express.Response }} requestDetails
+   * @returns {Promise<{ request: Express.Request, response: Express.Response, body: object, query: object, headers: object, params: object }>}
+   */
+
+  function gatherAuthParams(_x) {
+    return _gatherAuthParams.apply(this, arguments);
+  }
+  /**
    *
    * @param {function} func
    * @param {{ authenticator: function }} config
    */
 
+  function _gatherAuthParams() {
+    _gatherAuthParams = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee2(_ref2) {
+      var request, _ref2$response, response, _ref2$config, config, body;
+
+      return _regeneratorRuntime.wrap(function _callee2$(_context2) {
+        while (1) {
+          switch (_context2.prev = _context2.next) {
+            case 0:
+              request = _ref2.request, _ref2$response = _ref2.response, response = _ref2$response === void 0 ? {} : _ref2$response, _ref2$config = _ref2.config, config = _ref2$config === void 0 ? {} : _ref2$config;
+              _context2.next = 3;
+              return collectBody(request);
+
+            case 3:
+              request.raw = _context2.sent;
+              body = parseBody(request.raw.toString());
+              request.body = body;
+              return _context2.abrupt("return", {
+                request: request,
+                response: response,
+                body: config.noParse ? undefined : request.body,
+                query: request.query,
+                headers: request.headers,
+                params: Object.assign({}, request.query || {}, request.body || {})
+              });
+
+            case 7:
+            case "end":
+              return _context2.stop();
+          }
+        }
+      }, _callee2);
+    }));
+    return _gatherAuthParams.apply(this, arguments);
+  }
 
   function responseWrapper(func, config, apinionRouter) {
     if (typeof func !== 'function') {
@@ -523,59 +566,45 @@
     }
 
     return /*#__PURE__*/function () {
-      var _ref2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee(request, response) {
-        var body, params, _getParams, missing, data, _getParams2, _missing, _data, endpointResponse, _config, _config$onError, _apinionRouter$onErro, _config2;
+      var _ref3 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee(request, response) {
+        var params, _getParams, missing, data, _getParams2, _missing, _data, endpointResponse, _config, _config$onError, _apinionRouter$onErro, _config2;
 
         return _regeneratorRuntime.wrap(function _callee$(_context) {
           while (1) {
             switch (_context.prev = _context.next) {
               case 0:
                 _context.prev = 0;
-
-                if (config.noParse) {
-                  _context.next = 7;
-                  break;
-                }
-
-                _context.next = 4;
-                return collectBody(request);
-
-              case 4:
-                request.raw = _context.sent;
-                body = parseBody(request.raw.toString());
-                request.body = body;
-
-              case 7:
-                params = {
+                _context.next = 3;
+                return gatherAuthParams({
                   request: request,
                   response: response,
-                  body: config.noParse ? undefined : request.body,
-                  query: request.query,
-                  headers: request.headers,
-                  params: Object.assign({}, request.query || {}, request.body || {})
-                };
+                  config: config
+                });
+
+              case 3:
+                params = _context.sent;
 
                 if (!config.authenticator) {
-                  _context.next = 12;
+                  _context.next = 8;
                   break;
                 }
 
-                _context.next = 11;
+                _context.next = 7;
                 return config.authenticator(params);
 
-              case 11:
+              case 7:
                 params.identity = _context.sent;
 
-              case 12:
+              case 8:
                 if (!config.required) {
-                  _context.next = 17;
+                  _context.next = 13;
                   break;
                 }
 
                 _getParams = getParams(config.required, params), missing = _getParams.missing, data = _getParams.data;
 
                 if (!(missing.length > 0)) {
-                  _context.next = 16;
+                  _context.next = 12;
                   break;
                 }
 
@@ -586,19 +615,19 @@
                   }).join(', '))
                 });
 
-              case 16:
+              case 12:
                 params.required = data;
 
-              case 17:
+              case 13:
                 if (!config.hidden_required) {
-                  _context.next = 22;
+                  _context.next = 18;
                   break;
                 }
 
                 _getParams2 = getParams(config.hidden, params), _missing = _getParams2.missing, _data = _getParams2.data;
 
                 if (!(_missing.length > 0)) {
-                  _context.next = 21;
+                  _context.next = 17;
                   break;
                 }
 
@@ -607,14 +636,14 @@
                   message: 'your request is incomplete (this is probably because you are missing some essential hidden requirement)'
                 });
 
-              case 21:
+              case 17:
                 params.hidden = _data;
 
-              case 22:
-                _context.next = 24;
+              case 18:
+                _context.next = 20;
                 return func(params);
 
-              case 24:
+              case 20:
                 endpointResponse = _context.sent;
 
                 if (!response._headerSent) {
@@ -625,14 +654,14 @@
                   }
                 }
 
-                _context.next = 41;
+                _context.next = 37;
                 break;
 
-              case 28:
-                _context.prev = 28;
+              case 24:
+                _context.prev = 24;
                 _context.t0 = _context["catch"](0);
-                _context.prev = 30;
-                _context.next = 33;
+                _context.prev = 26;
+                _context.next = 29;
                 return (_config = config) === null || _config === void 0 ? void 0 : (_config$onError = _config.onError) === null || _config$onError === void 0 ? void 0 : _config$onError.call(_config, {
                   error: _context.t0,
                   config: config,
@@ -640,8 +669,8 @@
                   response: response
                 });
 
-              case 33:
-                _context.next = 35;
+              case 29:
+                _context.next = 31;
                 return apinionRouter === null || apinionRouter === void 0 ? void 0 : (_apinionRouter$onErro = apinionRouter.onError) === null || _apinionRouter$onErro === void 0 ? void 0 : _apinionRouter$onErro.call(apinionRouter, {
                   error: _context.t0,
                   config: config,
@@ -649,30 +678,30 @@
                   response: response
                 });
 
-              case 35:
-                _context.next = 40;
+              case 31:
+                _context.next = 36;
                 break;
 
-              case 37:
-                _context.prev = 37;
-                _context.t1 = _context["catch"](30);
+              case 33:
+                _context.prev = 33;
+                _context.t1 = _context["catch"](26);
                 console.error("custom error handler threw error (check your onError handler in your ".concat(((_config2 = config) === null || _config2 === void 0 ? void 0 : _config2.route) || request.originalUrl, " endpoint) (check your apinionRouter.onError function)"), _context.t1);
 
-              case 40:
+              case 36:
                 if (!response._headerSent) {
                   applyHttpError(request, response, _context.t0);
                 }
 
-              case 41:
+              case 37:
               case "end":
                 return _context.stop();
             }
           }
-        }, _callee, null, [[0, 28], [30, 37]]);
+        }, _callee, null, [[0, 24], [26, 33]]);
       }));
 
-      return function (_x, _x2) {
-        return _ref2.apply(this, arguments);
+      return function (_x2, _x3) {
+        return _ref3.apply(this, arguments);
       };
     }();
   }
@@ -1103,6 +1132,7 @@
 
   exports.HttpError = HttpError$1;
   exports.Router = Router;
+  exports.gatherAuthParams = gatherAuthParams;
   exports.makeBasicAuthenticator = makeBasicAuthenticator;
   exports.makeBearerTokenAuthenticator = makeBearerTokenAuthenticator;
   exports.makeEndpoint = makeEndpoint;

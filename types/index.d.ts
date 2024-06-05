@@ -5,4 +5,5 @@ import { makeBasicAuthenticator } from './authenticators/basicAuthenticator';
 import { makeBearerTokenAuthenticator } from './authenticators/bearerTokenAuthenticator';
 import { makeHardcodedBasicAuthenticator } from './authenticators/basicAuthenticator';
 import { makeRequestAuthenticator } from './authenticators/requestAuthenticator';
-export { Router, HttpError, makeEndpoint, makeBasicAuthenticator, makeBearerTokenAuthenticator, makeHardcodedBasicAuthenticator, makeRequestAuthenticator };
+import { gatherAuthParams } from './utilities/responseWrapper';
+export { Router, HttpError, makeEndpoint, makeBasicAuthenticator, makeBearerTokenAuthenticator, makeHardcodedBasicAuthenticator, makeRequestAuthenticator, gatherAuthParams };

@@ -17,12 +17,32 @@ function getParams(keyList, { body, query }) {
   return { missing, data };
 }
 
-function collectBody(request) {
+export function collectBody(request) {
   return new Promise((resolve, reject) => {
     const output = new WritableBufferStream(resolve);
     output.on('error', reject);
     request.pipe(output);
   });
+}
+
+/**
+ * Gather required input parameters for an authenticator body, useful for implementing auth in websocket upgrade requests
+ * @param {{ request: Express.Request, response: Express.Response }} requestDetails
+ * @returns {Promise<{ request: Express.Request, response: Express.Response, body: object, query: object, headers: object, params: object }>}
+ */
+export async function gatherAuthParams({ request, response = {}, config = {} }) {
+  request.raw = await collectBody(request);
+  const body = parseBody(request.raw.toString());
+  request.body = body;
+
+  return {
+    request,
+    response,
+    body: config.noParse ? undefined : request.body,
+    query: request.query,
+    headers: request.headers,
+    params: Object.assign({}, request.query || {}, request.body || {})
+  };
 }
 
 /**
@@ -44,12 +64,8 @@ export function responseWrapper(func, config, apinionRouter) {
 
   return async (request, response) => {
     try {
-      if (!config.noParse) {
-        request.raw = await collectBody(request);
-        const body = parseBody(request.raw.toString());
-        request.body = body;
-      }
-      const params = { request, response, body: config.noParse ? undefined : request.body, query: request.query, headers: request.headers, params: Object.assign({}, request.query || {}, request.body || {}) };
+      const params = await gatherAuthParams({ request, response, config });
+
       if (config.authenticator) {
         params.identity = await config.authenticator(params);
       }

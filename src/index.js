@@ -4,6 +4,8 @@ import { makeRequestAuthenticator } from './authenticators/requestAuthenticator'
 import { Router } from './Router';
 import { HttpError } from './utilities/HttpError';
 import { makeEndpoint } from './utilities/makeEndpoint';
+import { gatherAuthParams } from './utilities/responseWrapper';
+
 export {
   Router,
   HttpError,
@@ -12,4 +14,5 @@ export {
   makeBearerTokenAuthenticator,
   makeHardcodedBasicAuthenticator,
   makeRequestAuthenticator,
+  gatherAuthParams,
 };
