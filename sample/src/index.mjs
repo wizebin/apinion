@@ -2,6 +2,9 @@ import { Router, makeEndpoint } from 'apinion';
 import aRouter from './endpoints/subrouterTypeA/aRouter.mjs';
 import basicAuth from './endpoints/basicAuth.mjs';
 import customAuth from './endpoints/customAuth.mjs';
+// import ws from 'ws'; // for non ESM
+// const WebSocketServer = ws.Server // for non ESM
+import { WebSocketServer } from 'ws'
 
 const router = new Router();
 
@@ -59,6 +62,23 @@ router.applyRoutes([{
     { path: 'custom', any: customAuth },
   ],
 }])
+
+const websockServer = new WebSocketServer({ noServer: true });
+
+router.upgrade((request, socket, head) => {
+  // perform your authentication here
+  const extraAttachmentData = { client_id: 123 };
+
+  websockServer.handleUpgrade(request, socket, head, (ws) => {
+    ws.on('message', (message) => {
+      console.log(extraAttachmentData.client_id, 'received: %s', message);
+    });
+
+    ws.on('close', () => {
+      console.log(extraAttachmentData.client_id, 'Client disconnected');
+    });
+  });
+});
 
 console.log('starting server at http://localhost:5550/');
 router.listen(5550);

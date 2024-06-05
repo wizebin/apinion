@@ -316,6 +316,20 @@ export class Router {
      */
     use: (func: express.RequestHandler, ...passthrough: any[]) => void;
     /**
+      * A callback used to handle upgrade requests, this is a global event instead of an event attached to a given endpoint
+      * @callback upgradeCallback
+      * @param {express.Request} request - The express request
+      * @param {stream.Duplex} socket - The tcp socket
+      * @param {Buffer} head
+     */
+    /**
+     * @param {upgradeCallback} callback
+     */
+    upgrade: (func: any) => void;
+    upgradeFunction: any;
+    attachUpgradeFunction: (func: any) => void;
+    applyConnectionHandlers: () => void;
+    /**
      * @param {Array.<{ path, executor, get, options, delete: deleteRoute, patch, post, put, subrouter, any }>} routes
      */
     applyRoutes: (routes: Array<{

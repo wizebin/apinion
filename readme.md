@@ -309,6 +309,58 @@ router.addEarlyDisconnectCallback(({ request, response, status }) => {
 router.listen(5550);
 ```
 
+## Handling websocket upgrade requests
+
+We recommend installing the 'ws' package to help handle the specifics, here's how you integrate that package:
+
+```javascript
+import { Server as WebSocketServer } from 'ws'; // COMMONJS
+// import { WebSocketServer } from 'ws'; // ESM/MJS
+import { Router } from 'apinion';
+
+const router = new Router();
+
+const websockServer = new WebSocketServer({ noServer: true });
+
+router.upgrade((request, socket, head) => {
+  // perform your authentication here
+  const authData = { client_id: 123 };
+
+  websockServer.handleUpgrade(request, socket, head, (ws) => {
+    ws.on('message', (message) => {
+      console.log(authData.client_id, 'received: %s', message);
+    });
+
+    ws.on('close', () => {
+      console.log(authData.client_id, 'Client disconnected');
+    });
+  });
+});
+
+router.listen(5550);
+```
+
+## Accessing the express app and http server
+
+```javascript
+import { Router } from 'apinion';
+
+const router = new Router();
+
+const expressApp = router.expressApp();
+
+expressApp.get('/express', (req, res) => {
+  res.send('this is a route attached directly through expressjs instead of through an apinion helper');
+});
+
+expressApp.listen(5550);
+
+const httpServer = expressApp.connection; // only available after .listen()
+httpServer.on('listening', () => {
+  console.log('http server is listening');
+});
+```
+
 # Troubleshooting
 
 ## I'm getting an error about experimental modules

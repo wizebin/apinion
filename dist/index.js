@@ -1,8 +1,8 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@babel/runtime/regenerator'), require('@babel/runtime/helpers/asyncToGenerator'), require('@babel/runtime/helpers/classCallCheck'), require('@babel/runtime/helpers/typeof'), require('@babel/runtime/helpers/toConsumableArray'), require('@babel/runtime/helpers/createClass'), require('@babel/runtime/helpers/defineProperty'), require('express'), require('@babel/runtime/helpers/assertThisInitialized'), require('@babel/runtime/helpers/inherits'), require('@babel/runtime/helpers/possibleConstructorReturn'), require('@babel/runtime/helpers/getPrototypeOf'), require('stream')) :
-  typeof define === 'function' && define.amd ? define(['exports', '@babel/runtime/regenerator', '@babel/runtime/helpers/asyncToGenerator', '@babel/runtime/helpers/classCallCheck', '@babel/runtime/helpers/typeof', '@babel/runtime/helpers/toConsumableArray', '@babel/runtime/helpers/createClass', '@babel/runtime/helpers/defineProperty', 'express', '@babel/runtime/helpers/assertThisInitialized', '@babel/runtime/helpers/inherits', '@babel/runtime/helpers/possibleConstructorReturn', '@babel/runtime/helpers/getPrototypeOf', 'stream'], factory) :
-  (global = global || self, factory(global.apinion = {}, global._regeneratorRuntime, global._asyncToGenerator, global._classCallCheck, global._typeof, global._toConsumableArray, global._createClass, global._defineProperty, global.express, global._assertThisInitialized, global._inherits, global._possibleConstructorReturn, global._getPrototypeOf, global.stream));
-}(this, (function (exports, _regeneratorRuntime, _asyncToGenerator, _classCallCheck, _typeof, _toConsumableArray, _createClass, _defineProperty, express, _assertThisInitialized, _inherits, _possibleConstructorReturn, _getPrototypeOf, stream) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@babel/runtime/regenerator'), require('@babel/runtime/helpers/asyncToGenerator'), require('@babel/runtime/helpers/classCallCheck'), require('@babel/runtime/helpers/typeof'), require('@babel/runtime/helpers/toConsumableArray'), require('@babel/runtime/helpers/createClass'), require('@babel/runtime/helpers/defineProperty'), require('express'), require('stream'), require('@babel/runtime/helpers/assertThisInitialized'), require('@babel/runtime/helpers/inherits'), require('@babel/runtime/helpers/possibleConstructorReturn'), require('@babel/runtime/helpers/getPrototypeOf')) :
+  typeof define === 'function' && define.amd ? define(['exports', '@babel/runtime/regenerator', '@babel/runtime/helpers/asyncToGenerator', '@babel/runtime/helpers/classCallCheck', '@babel/runtime/helpers/typeof', '@babel/runtime/helpers/toConsumableArray', '@babel/runtime/helpers/createClass', '@babel/runtime/helpers/defineProperty', 'express', 'stream', '@babel/runtime/helpers/assertThisInitialized', '@babel/runtime/helpers/inherits', '@babel/runtime/helpers/possibleConstructorReturn', '@babel/runtime/helpers/getPrototypeOf'], factory) :
+  (global = global || self, factory(global.apinion = {}, global._regeneratorRuntime, global._asyncToGenerator, global._classCallCheck, global._typeof, global._toConsumableArray, global._createClass, global._defineProperty, global.express, global.stream, global._assertThisInitialized, global._inherits, global._possibleConstructorReturn, global._getPrototypeOf));
+}(this, (function (exports, _regeneratorRuntime, _asyncToGenerator, _classCallCheck, _typeof, _toConsumableArray, _createClass, _defineProperty, express, stream, _assertThisInitialized, _inherits, _possibleConstructorReturn, _getPrototypeOf) { 'use strict';
 
   _regeneratorRuntime = _regeneratorRuntime && Object.prototype.hasOwnProperty.call(_regeneratorRuntime, 'default') ? _regeneratorRuntime['default'] : _regeneratorRuntime;
   _asyncToGenerator = _asyncToGenerator && Object.prototype.hasOwnProperty.call(_asyncToGenerator, 'default') ? _asyncToGenerator['default'] : _asyncToGenerator;
@@ -12,6 +12,7 @@
   _createClass = _createClass && Object.prototype.hasOwnProperty.call(_createClass, 'default') ? _createClass['default'] : _createClass;
   _defineProperty = _defineProperty && Object.prototype.hasOwnProperty.call(_defineProperty, 'default') ? _defineProperty['default'] : _defineProperty;
   express = express && Object.prototype.hasOwnProperty.call(express, 'default') ? express['default'] : express;
+  var stream__default = 'default' in stream ? stream['default'] : stream;
   _assertThisInitialized = _assertThisInitialized && Object.prototype.hasOwnProperty.call(_assertThisInitialized, 'default') ? _assertThisInitialized['default'] : _assertThisInitialized;
   _inherits = _inherits && Object.prototype.hasOwnProperty.call(_inherits, 'default') ? _inherits['default'] : _inherits;
   _possibleConstructorReturn = _possibleConstructorReturn && Object.prototype.hasOwnProperty.call(_possibleConstructorReturn, 'default') ? _possibleConstructorReturn['default'] : _possibleConstructorReturn;
@@ -940,6 +941,26 @@
         (_this$app13 = _this.app).use.apply(_this$app13, [func].concat(passthrough));
       });
 
+      _defineProperty(this, "upgrade", function (func) {
+        _this.upgradeFunction = func;
+
+        if (_this.connection) {
+          _this.attachUpgradeFunction(_this.upgradeFunction);
+        }
+      });
+
+      _defineProperty(this, "attachUpgradeFunction", function (func) {
+        if (_this.connection) {
+          _this.connection.on('upgrade', func);
+        }
+      });
+
+      _defineProperty(this, "applyConnectionHandlers", function () {
+        if (_this.upgradeFunction) {
+          _this.attachUpgradeFunction(_this.upgradeFunction);
+        }
+      });
+
       _defineProperty(this, "applyRoutes", function (routes) {
         if (Array.isArray && !Array.isArray(routes)) {
           routes = [routes];
@@ -1023,6 +1044,8 @@
 
           _this.connection.keepAliveTimeout = 60 * 1000;
           _this.connection.headersTimeout = 61 * 1000;
+
+          _this.applyConnectionHandlers();
         });
       });
 

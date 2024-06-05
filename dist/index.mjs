@@ -6,11 +6,11 @@ import _toConsumableArray from '@babel/runtime/helpers/toConsumableArray';
 import _createClass from '@babel/runtime/helpers/createClass';
 import _defineProperty from '@babel/runtime/helpers/defineProperty';
 import express from 'express';
+import { Writable } from 'stream';
 import _assertThisInitialized from '@babel/runtime/helpers/assertThisInitialized';
 import _inherits from '@babel/runtime/helpers/inherits';
 import _possibleConstructorReturn from '@babel/runtime/helpers/possibleConstructorReturn';
 import _getPrototypeOf from '@babel/runtime/helpers/getPrototypeOf';
-import { Writable } from 'stream';
 
 function getTypeString(data) {
   var stringType = _typeof(data);
@@ -935,6 +935,26 @@ var Router = /*#__PURE__*/function () {
       (_this$app13 = _this.app).use.apply(_this$app13, [func].concat(passthrough));
     });
 
+    _defineProperty(this, "upgrade", function (func) {
+      _this.upgradeFunction = func;
+
+      if (_this.connection) {
+        _this.attachUpgradeFunction(_this.upgradeFunction);
+      }
+    });
+
+    _defineProperty(this, "attachUpgradeFunction", function (func) {
+      if (_this.connection) {
+        _this.connection.on('upgrade', func);
+      }
+    });
+
+    _defineProperty(this, "applyConnectionHandlers", function () {
+      if (_this.upgradeFunction) {
+        _this.attachUpgradeFunction(_this.upgradeFunction);
+      }
+    });
+
     _defineProperty(this, "applyRoutes", function (routes) {
       if (Array.isArray && !Array.isArray(routes)) {
         routes = [routes];
@@ -1018,6 +1038,8 @@ var Router = /*#__PURE__*/function () {
 
         _this.connection.keepAliveTimeout = 60 * 1000;
         _this.connection.headersTimeout = 61 * 1000;
+
+        _this.applyConnectionHandlers();
       });
     });
 

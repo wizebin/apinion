@@ -1,4 +1,5 @@
 import express from 'express';
+import stream from 'stream';
 import { joinWithSingle } from './utilities/joinWithSingle';
 import { responseWrapper } from './utilities/responseWrapper';
 import { HttpError, applyHttpError } from './utilities/HttpError';
@@ -270,6 +271,38 @@ export class Router {
     this.app.use(func, ...passthrough);
   }
 
+
+
+  /**
+    * A callback used to handle upgrade requests, this is a global event instead of an event attached to a given endpoint
+    * @callback upgradeCallback
+    * @param {express.Request} request - The express request
+    * @param {stream.Duplex} socket - The tcp socket
+    * @param {Buffer} head
+   */
+
+  /**
+   * @param {upgradeCallback} callback
+   */
+  upgrade = (func) => {
+    this.upgradeFunction = func;
+    if (this.connection) {
+      this.attachUpgradeFunction(this.upgradeFunction);
+    }
+  }
+
+  attachUpgradeFunction = (func) => {
+    if (this.connection) {
+      this.connection.on('upgrade', func);
+    }
+  }
+
+  applyConnectionHandlers = () => {
+    if (this.upgradeFunction) {
+      this.attachUpgradeFunction(this.upgradeFunction);
+    }
+  }
+
   /**
    * @param {Array.<{ path, executor, get, options, delete: deleteRoute, patch, post, put, subrouter, any }>} routes
    */
@@ -329,6 +362,7 @@ export class Router {
       this.app.once('error', reject);
       this.connection.keepAliveTimeout = 60 * 1000;
       this.connection.headersTimeout = 61 * 1000;
+      this.applyConnectionHandlers();
     });
   }
 }
