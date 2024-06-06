@@ -11,6 +11,7 @@ import _assertThisInitialized from '@babel/runtime/helpers/assertThisInitialized
 import _inherits from '@babel/runtime/helpers/inherits';
 import _possibleConstructorReturn from '@babel/runtime/helpers/possibleConstructorReturn';
 import _getPrototypeOf from '@babel/runtime/helpers/getPrototypeOf';
+import http from 'http';
 
 function getTypeString(data) {
   var stringType = _typeof(data);
@@ -453,6 +454,10 @@ var WritableBufferStream = /*#__PURE__*/function (_Writable) {
   return WritableBufferStream;
 }(Writable);
 
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
 function _createForOfIteratorHelper$2(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
@@ -506,7 +511,7 @@ function collectBody(request) {
  */
 
 
-function responseWrapper(func, config, apinionRouter) {
+function responseWrapper(func, config, apinionRouter, type) {
   if (typeof func !== 'function') {
     if (typeof config === 'function') {
       func = config;
@@ -517,7 +522,7 @@ function responseWrapper(func, config, apinionRouter) {
   }
 
   return /*#__PURE__*/function () {
-    var _ref2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee(request, response) {
+    var _ref2 = _asyncToGenerator( /*#__PURE__*/_regeneratorRuntime.mark(function _callee(request, response, extras) {
       var body, params, _getParams, missing, data, _getParams2, _missing, _data, endpointResponse, _config, _config$onError, _apinionRouter$onErro, _config2;
 
       return _regeneratorRuntime.wrap(function _callee$(_context) {
@@ -540,14 +545,14 @@ function responseWrapper(func, config, apinionRouter) {
               request.body = body;
 
             case 7:
-              params = {
+              params = _objectSpread({
                 request: request,
                 response: response,
                 body: config.noParse ? undefined : request.body,
                 query: request.query,
                 headers: request.headers,
                 params: Object.assign({}, request.query || {}, request.body || {})
-              };
+              }, extras);
 
               if (!config.authenticator) {
                 _context.next = 12;
@@ -611,11 +616,13 @@ function responseWrapper(func, config, apinionRouter) {
             case 24:
               endpointResponse = _context.sent;
 
-              if (!response._headerSent) {
-                if (typeof endpointResponse === 'string') {
-                  response.send(endpointResponse);
-                } else {
-                  response.json(endpointResponse);
+              if (type === 'upgrade') ; else {
+                if (!response._headerSent) {
+                  if (typeof endpointResponse === 'string') {
+                    response.send(endpointResponse);
+                  } else {
+                    response.json(endpointResponse);
+                  }
                 }
               }
 
@@ -627,21 +634,21 @@ function responseWrapper(func, config, apinionRouter) {
               _context.t0 = _context["catch"](0);
               _context.prev = 30;
               _context.next = 33;
-              return (_config = config) === null || _config === void 0 ? void 0 : (_config$onError = _config.onError) === null || _config$onError === void 0 ? void 0 : _config$onError.call(_config, {
+              return (_config = config) === null || _config === void 0 ? void 0 : (_config$onError = _config.onError) === null || _config$onError === void 0 ? void 0 : _config$onError.call(_config, _objectSpread({
                 error: _context.t0,
                 config: config,
                 request: request,
                 response: response
-              });
+              }, extras));
 
             case 33:
               _context.next = 35;
-              return apinionRouter === null || apinionRouter === void 0 ? void 0 : (_apinionRouter$onErro = apinionRouter.onError) === null || _apinionRouter$onErro === void 0 ? void 0 : _apinionRouter$onErro.call(apinionRouter, {
+              return apinionRouter === null || apinionRouter === void 0 ? void 0 : (_apinionRouter$onErro = apinionRouter.onError) === null || _apinionRouter$onErro === void 0 ? void 0 : _apinionRouter$onErro.call(apinionRouter, _objectSpread({
                 error: _context.t0,
                 config: config,
                 request: request,
                 response: response
-              });
+              }, extras));
 
             case 35:
               _context.next = 40;
@@ -654,6 +661,7 @@ function responseWrapper(func, config, apinionRouter) {
 
             case 40:
               if (!response._headerSent) {
+                // this gets tricky with upgrade requests, you can manually set this flag in your config error handler if you want to avoid the extra data
                 applyHttpError(request, response, _context.t0);
               }
 
@@ -665,11 +673,116 @@ function responseWrapper(func, config, apinionRouter) {
       }, _callee, null, [[0, 28], [30, 37]]);
     }));
 
-    return function (_x, _x2) {
+    return function (_x, _x2, _x3) {
       return _ref2.apply(this, arguments);
     };
   }();
 }
+
+function _createSuper$1(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct$1(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _isNativeReflectConstruct$1() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+var wsRequest = /*#__PURE__*/function (_http$IncomingMessage) {
+  _inherits(wsRequest, _http$IncomingMessage);
+
+  var _super = _createSuper$1(wsRequest);
+
+  function wsRequest() {
+    _classCallCheck(this, wsRequest);
+
+    return _super.call(this);
+  }
+
+  return wsRequest;
+}(http.IncomingMessage);
+var wsResponse = /*#__PURE__*/function (_http$OutgoingMessage) {
+  _inherits(wsResponse, _http$OutgoingMessage);
+
+  var _super2 = _createSuper$1(wsResponse);
+
+  function wsResponse(request, socket, configuration) {
+    var _this;
+
+    _classCallCheck(this, wsResponse);
+
+    _this = _super2.call(this, request, configuration);
+    /**
+     * @type {import('net').Socket}
+     */
+
+    _this.sock = socket;
+
+    if (!_this[Symbol('kSocket')]) {
+      _this[Symbol('kSocket')] = socket;
+    }
+
+    return _this;
+  }
+
+  _createClass(wsResponse, [{
+    key: "status",
+    value: function status(code) {
+      this.statusCode = code;
+      return this;
+    }
+  }, {
+    key: "getHeadersString",
+    value: function getHeadersString() {}
+  }, {
+    key: "send",
+    value: function send(data) {
+      var _this$sock;
+
+      if (!this.sock || (_this$sock = this.sock) !== null && _this$sock !== void 0 && _this$sock.destroyed) {
+        return;
+      }
+
+      this.status(this.statusCode || 200);
+
+      if (this._header) {
+        this.sock.write(this._header);
+      } else {
+        this.sock.write('HTTP/1.1 ' + this.statusCode + ' ' + http.STATUS_CODES[this.statusCode] + '\r\n');
+      }
+
+      this.sock.write('\r\n');
+
+      if (data instanceof Buffer || typeof data === 'string') {
+        this.sock.write(data);
+      } else {
+        this.sock.write(JSON.stringify(data));
+      }
+
+      this.sock.end();
+      this._headerSent = true; // unsure why this doesn't work :/
+      // for now let's stick with direct socket writing and move on with our lives
+      // this.status(this.statusCode || 200);
+      // if (data instanceof Buffer || typeof data === 'string') {
+      //   this.end(data); // same as this.write then this.end
+      // } else if (typeof data === 'object') {
+      //   this.end(JSON.stringify(data)); // same as this.write then this.end
+      // } else {
+      //   this.end(`${data}`);
+      // }
+    }
+  }, {
+    key: "json",
+    value: function json(data) {
+      this.send(JSON.stringify(data));
+    }
+  }, {
+    key: "_implicitHeader",
+    value: function _implicitHeader() {
+      if (this._header) {
+        return;
+      }
+
+      this._storeHeader(this.method + ' ' + this.path + ' HTTP/1.1\r\n', this[Symbol('kOutHeaders')]);
+    }
+  }]);
+
+  return wsResponse;
+}(http.OutgoingMessage);
 
 function _createForOfIteratorHelper$3(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$3(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
@@ -854,12 +967,13 @@ var Router = /*#__PURE__*/function () {
 
     _defineProperty(this, "getResponseWrapper", function (callback) {
       var config = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      var type = arguments.length > 2 ? arguments[2] : undefined;
 
       if (_this.authenticator && !config.authenticator) {
         config.authenticator = _this.authenticator;
       }
 
-      return responseWrapper(callback, config, _this);
+      return responseWrapper(callback, config, _this, type);
     });
 
     _defineProperty(this, "makeRouteDetails", function (type, route, config, callback) {
@@ -877,7 +991,7 @@ var Router = /*#__PURE__*/function () {
         params = params.concat(defaultedConfig.middleware);
       }
 
-      params.push(_this.getResponseWrapper(callback, defaultedConfig));
+      params.push(_this.getResponseWrapper(callback, defaultedConfig, type));
       return params;
     });
 
@@ -917,6 +1031,58 @@ var Router = /*#__PURE__*/function () {
       return (_this$app6 = _this.app).options.apply(_this$app6, _toConsumableArray(_this.makeRouteDetails('options', route, config, callback)));
     });
 
+    _defineProperty(this, "upgrade", function (route, config, callback) {
+      config = config || {};
+      config.noParse = true; // must have noParse to avoid piping the socket
+
+      _this.upgradeRoutes.push(_this.makeRouteDetails('upgrade', route, config, callback));
+
+      _this.globalUpgrade(_this.handleInternalUpgrade); // deduplicates
+
+    });
+
+    _defineProperty(this, "handleInternalUpgrade", function (request, socket, head) {
+      var url = request.url;
+
+      var _iterator = _createForOfIteratorHelper$3(_this.upgradeRoutes),
+          _step;
+
+      try {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+          var upgradeDetails = _step.value;
+          var route = upgradeDetails[0]; // ignoring middleware second parameter, which is normally sent to app.get app.post, etc as the second parameter optionally
+
+          var callback = upgradeDetails[upgradeDetails.length - 1];
+
+          if (url.match(route)) {
+            var innerRequest = new wsRequest();
+            Object.assign(innerRequest, request);
+            innerRequest.originalUrl = url;
+            var innerResponse = new wsResponse(request, socket, {
+              highWaterMark: socket.writableHighWaterMark,
+              rejectNonStandardBodyWrites: false,
+              keepAliveTimeout: 0,
+              maxRequestsPerSocket: 0,
+              shouldKeepAlive: true
+            });
+            callback(innerRequest, innerResponse, {
+              socket: socket,
+              head: head
+            });
+            return;
+          }
+        }
+      } catch (err) {
+        _iterator.e(err);
+      } finally {
+        _iterator.f();
+      }
+
+      if (_this.destroyUnmatchedSocketRequests) {
+        socket.destroy();
+      }
+    });
+
     _defineProperty(this, "any", function (route, config, callback) {
       var _this$app7, _this$app8, _this$app9, _this$app10, _this$app11, _this$app12;
 
@@ -935,11 +1101,13 @@ var Router = /*#__PURE__*/function () {
       (_this$app13 = _this.app).use.apply(_this$app13, [func].concat(passthrough));
     });
 
-    _defineProperty(this, "upgrade", function (func) {
-      _this.upgradeFunction = func;
+    _defineProperty(this, "globalUpgrade", function (func) {
+      if (_this.upgradeFunctions.indexOf(func) === -1) {
+        _this.upgradeFunctions.push(func);
 
-      if (_this.connection) {
-        _this.attachUpgradeFunction(_this.upgradeFunction);
+        if (_this.connection) {
+          _this.attachUpgradeFunction(func);
+        }
       }
     });
 
@@ -949,9 +1117,36 @@ var Router = /*#__PURE__*/function () {
       }
     });
 
+    _defineProperty(this, "detachUpgradeFunction", function (func) {
+      if (_this.connection) {
+        _this.connection.off('upgrade', func);
+      }
+
+      var index = _this.upgradeFunctions.indexOf(func);
+
+      if (index > -1) {
+        _this.upgradeFunctions.splice(index, 1);
+      }
+    });
+
     _defineProperty(this, "applyConnectionHandlers", function () {
-      if (_this.upgradeFunction) {
-        _this.attachUpgradeFunction(_this.upgradeFunction);
+      var _this$upgradeFunction;
+
+      if ((_this$upgradeFunction = _this.upgradeFunctions) !== null && _this$upgradeFunction !== void 0 && _this$upgradeFunction.length) {
+        var _iterator2 = _createForOfIteratorHelper$3(_this.upgradeFunctions),
+            _step2;
+
+        try {
+          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+            var func = _step2.value;
+
+            _this.attachUpgradeFunction(func);
+          }
+        } catch (err) {
+          _iterator2.e(err);
+        } finally {
+          _iterator2.f();
+        }
       }
     });
 
@@ -960,12 +1155,12 @@ var Router = /*#__PURE__*/function () {
         routes = [routes];
       }
 
-      var _iterator = _createForOfIteratorHelper$3(routes),
-          _step;
+      var _iterator3 = _createForOfIteratorHelper$3(routes),
+          _step3;
 
       try {
-        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var route = _step.value;
+        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+          var route = _step3.value;
           var path = route.path,
               executor = route.executor,
               get = route.get,
@@ -975,7 +1170,8 @@ var Router = /*#__PURE__*/function () {
               post = route.post,
               put = route.put,
               subrouter = route.subrouter,
-              any = route.any;
+              any = route.any,
+              upgrade = route.upgrade;
           if (executor) _this.any(path, executor.config, executor.callback);
           if (any) _this.any(path, any.config, any.callback);
           if (get) _this.get(path, get.config, get.callback);
@@ -984,6 +1180,7 @@ var Router = /*#__PURE__*/function () {
           if (patch) _this.patch(path, patch.config, patch.callback);
           if (put) _this.put(path, put.config, put.callback);
           if (deleteRoute) _this["delete"](path, deleteRoute.config, deleteRoute.callback);
+          if (upgrade) _this.upgrade(path, upgrade.config, upgrade.callback);
 
           if (subrouter) {
             var sub = _this.subrouter(path);
@@ -992,9 +1189,9 @@ var Router = /*#__PURE__*/function () {
           }
         }
       } catch (err) {
-        _iterator.e(err);
+        _iterator3.e(err);
       } finally {
-        _iterator.f();
+        _iterator3.f();
       }
     });
 
@@ -1059,6 +1256,9 @@ var Router = /*#__PURE__*/function () {
     this.app = expressApp || express();
     this.baseDirectory = baseDirectory;
     this.routes = {};
+    this.upgradeRoutes = [];
+    this.upgradeFunctions = [];
+    this.destroyUnmatchedSocketRequests = true;
   }
   /**
    * When an uncaught error is thrown, or an promise is rejected and unhandled, this function will be called. If you want to respond with a custom error you can do so here, we recommend passing through any HttpErrors using something like

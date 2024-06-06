@@ -20,6 +20,9 @@ export class Router {
     public app: express.Express;
     baseDirectory: string;
     routes: {};
+    upgradeRoutes: any[];
+    upgradeFunctions: any[];
+    destroyUnmatchedSocketRequests: boolean;
     /**
      * When an uncaught error is thrown, or an promise is rejected and unhandled, this function will be called. If you want to respond with a custom error you can do so here, we recommend passing through any HttpErrors using something like
      * if (error instanceof HttpError) return response.status(error.status).send(error.message)
@@ -77,7 +80,7 @@ export class Router {
     getSubPath: (path: any) => any;
     describeSubroute: (subdirectory: any, meta: any) => void;
     subrouter: (subdirectory: any) => Router;
-    getResponseWrapper: (callback: any, config?: {}) => (request: any, response: any) => Promise<void>;
+    getResponseWrapper: (callback: any, config: {}, type: any) => (request: any, response: any, extras: any) => Promise<void>;
     makeRouteDetails: (type: any, route: any, config: any, callback: any) => any[];
     /**
      * Add a route that responds to GET requests, body will never be filled
@@ -278,6 +281,40 @@ export class Router {
         params: object;
     }) => void) => any;
     /**
+     * Upgrade routes are a bit different than normal verb endpoints, this is meant to consume a websocket upgrade request, unfortunately due to some constraints with expressjs there is no way to directly attach an upgrade handler like normal so we have to consume the upgrade event and pass it to this callback, that means our route is a bit less flexible than normal and subrouters aren't easily supported
+     * In your callback the request and response types will not be expressjs request and response, but rather apinion.wsRequest and apinion.wsResponse
+     * @param {string|RegExp} route
+     * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
+     * @param {function({ request: wsRequest, response: wsResponse, identity: any, body: object, query: object, headers: object, params: object }):void} callback
+     */
+    upgrade: (route: string | RegExp, config: {
+        required: string[] | null;
+        hidden_required: string[] | null;
+        authenticator: (arg0: {
+            request: express.Request;
+            response: express.Response;
+            body: object;
+            query: object;
+            headers: object;
+            params: object;
+        }) => any;
+        noParse: boolean | null;
+        onError: (arg0: {
+            request;
+            response;
+            error;
+        }) => null;
+    }, callback: (arg0: {
+        request: wsRequest;
+        response: wsResponse;
+        identity: any;
+        body: object;
+        query: object;
+        headers: object;
+        params: object;
+    }) => void) => void;
+    handleInternalUpgrade: (request: any, socket: any, head: any) => void;
+    /**
      * Add a route that responds to ANY requests, GET, POST, PUT, PATCH, DELETE, OPTIONS
      * create your authenticator with one of the maxXXXAuthenticator functions, or create a custom function throwing an HttpError or returning an identity
      * @param {string|RegExp} route
@@ -325,9 +362,9 @@ export class Router {
     /**
      * @param {upgradeCallback} callback
      */
-    upgrade: (func: any) => void;
-    upgradeFunction: any;
+    globalUpgrade: (func: any) => void;
     attachUpgradeFunction: (func: any) => void;
+    detachUpgradeFunction: (func: any) => void;
     applyConnectionHandlers: () => void;
     /**
      * @param {Array.<{ path, executor, get, options, delete: deleteRoute, patch, post, put, subrouter, any }>} routes
@@ -353,3 +390,5 @@ export class Router {
     listen: (port: any, callback: any) => Promise<any>;
     connection: any;
 }
+import { wsRequest } from './utilities/websock';
+import { wsResponse } from './utilities/websock';

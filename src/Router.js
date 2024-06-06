@@ -3,6 +3,7 @@ import stream from 'stream';
 import { joinWithSingle } from './utilities/joinWithSingle';
 import { responseWrapper } from './utilities/responseWrapper';
 import { HttpError, applyHttpError } from './utilities/HttpError';
+import { wsRequest, wsResponse } from './utilities/websock';
 
 export class Router {
   /**
@@ -27,6 +28,9 @@ export class Router {
     this.app = expressApp || express();
     this.baseDirectory = baseDirectory;
     this.routes = {};
+    this.upgradeRoutes = [];
+    this.upgradeFunctions = [];
+    this.destroyUnmatchedSocketRequests = true;
   }
 
   /**
@@ -156,12 +160,12 @@ export class Router {
     return subRouter;
   }
 
-  getResponseWrapper = (callback, config = {}) => {
+  getResponseWrapper = (callback, config = {}, type) => {
     if (this.authenticator && !config.authenticator) {
       config.authenticator = this.authenticator;
     }
 
-    return responseWrapper(callback, config, this);
+    return responseWrapper(callback, config, this, type);
   }
 
   makeRouteDetails = (type, route, config, callback) => {
@@ -173,7 +177,7 @@ export class Router {
     if (defaultedConfig?.middleware) {
       params = params.concat(defaultedConfig.middleware)
     }
-    params.push(this.getResponseWrapper(callback, defaultedConfig));
+    params.push(this.getResponseWrapper(callback, defaultedConfig, type));
     return params;
   }
 
@@ -244,6 +248,46 @@ export class Router {
   }
 
   /**
+   * Upgrade routes are a bit different than normal verb endpoints, this is meant to consume a websocket upgrade request, unfortunately due to some constraints with expressjs there is no way to directly attach an upgrade handler like normal so we have to consume the upgrade event and pass it to this callback, that means our route is a bit less flexible than normal and subrouters aren't easily supported
+   * In your callback the request and response types will not be expressjs request and response, but rather apinion.wsRequest and apinion.wsResponse
+   * @param {string|RegExp} route
+   * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
+   * @param {function({ request: wsRequest, response: wsResponse, identity: any, body: object, query: object, headers: object, params: object }):void} callback
+   */
+  upgrade = (route, config, callback) => {
+    config = config || {};
+    config.noParse = true; // must have noParse to avoid piping the socket
+    this.upgradeRoutes.push(this.makeRouteDetails('upgrade', route, config, callback));
+    this.globalUpgrade(this.handleInternalUpgrade); // deduplicates
+  }
+
+  handleInternalUpgrade = (request, socket, head) => {
+    const { url } = request;
+
+    for (let upgradeDetails of this.upgradeRoutes) {
+      let route = upgradeDetails[0];
+      // ignoring middleware second parameter, which is normally sent to app.get app.post, etc as the second parameter optionally
+      let callback = upgradeDetails[upgradeDetails.length - 1];
+
+      if (url.match(route)) {
+        const innerRequest = new wsRequest();
+        Object.assign(innerRequest, request);
+        innerRequest.originalUrl = url;
+
+        const innerResponse = new wsResponse(request, socket, { highWaterMark: socket.writableHighWaterMark, rejectNonStandardBodyWrites: false, keepAliveTimeout: 0, maxRequestsPerSocket: 0, shouldKeepAlive: true });
+
+        callback(innerRequest, innerResponse, { socket, head });
+
+        return;
+      }
+    }
+
+    if (this.destroyUnmatchedSocketRequests) {
+      socket.destroy();
+    }
+  }
+
+  /**
    * Add a route that responds to ANY requests, GET, POST, PUT, PATCH, DELETE, OPTIONS
    * create your authenticator with one of the maxXXXAuthenticator functions, or create a custom function throwing an HttpError or returning an identity
    * @param {string|RegExp} route
@@ -271,8 +315,6 @@ export class Router {
     this.app.use(func, ...passthrough);
   }
 
-
-
   /**
     * A callback used to handle upgrade requests, this is a global event instead of an event attached to a given endpoint
     * @callback upgradeCallback
@@ -284,10 +326,13 @@ export class Router {
   /**
    * @param {upgradeCallback} callback
    */
-  upgrade = (func) => {
-    this.upgradeFunction = func;
-    if (this.connection) {
-      this.attachUpgradeFunction(this.upgradeFunction);
+  globalUpgrade = (func) => {
+    if (this.upgradeFunctions.indexOf(func) === -1) {
+      this.upgradeFunctions.push(func);
+
+      if (this.connection) {
+        this.attachUpgradeFunction(func);
+      }
     }
   }
 
@@ -297,9 +342,22 @@ export class Router {
     }
   }
 
+  detachUpgradeFunction = (func) => {
+    if (this.connection) {
+      this.connection.off('upgrade', func);
+    }
+
+    const index = this.upgradeFunctions.indexOf(func);
+    if (index > -1) {
+      this.upgradeFunctions.splice(index, 1);
+    }
+  }
+
   applyConnectionHandlers = () => {
-    if (this.upgradeFunction) {
-      this.attachUpgradeFunction(this.upgradeFunction);
+    if (this.upgradeFunctions?.length) {
+      for (let func of this.upgradeFunctions) {
+        this.attachUpgradeFunction(func);
+      }
     }
   }
 
@@ -312,7 +370,7 @@ export class Router {
     }
 
     for (let route of routes) {
-      const { path, executor, get, options, delete: deleteRoute, patch, post, put, subrouter, any } = route;
+      const { path, executor, get, options, delete: deleteRoute, patch, post, put, subrouter, any, upgrade } = route;
 
       if (executor) this.any(path, executor.config, executor.callback);
       if (any) this.any(path, any.config, any.callback);
@@ -322,6 +380,7 @@ export class Router {
       if (patch) this.patch(path, patch.config, patch.callback);
       if (put) this.put(path, put.config, put.callback);
       if (deleteRoute) this.delete(path, deleteRoute.config, deleteRoute.callback);
+      if (upgrade) this.upgrade(path, upgrade.config, upgrade.callback);
       if (subrouter) {
         const sub = this.subrouter(path);
         sub.applyRoutes(subrouter);

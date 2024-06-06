@@ -1,10 +1,11 @@
-import { Router, makeEndpoint } from 'apinion';
+import { Router, makeEndpoint, makeRequestAuthenticator } from 'apinion';
 import aRouter from './endpoints/subrouterTypeA/aRouter.mjs';
 import basicAuth from './endpoints/basicAuth.mjs';
 import customAuth from './endpoints/customAuth.mjs';
 // import ws from 'ws'; // for non ESM
 // const WebSocketServer = ws.Server // for non ESM
 import { WebSocketServer } from 'ws'
+import { HttpError } from '../../dist/index.mjs';
 
 const router = new Router();
 
@@ -63,19 +64,24 @@ router.applyRoutes([{
   ],
 }])
 
-const websockServer = new WebSocketServer({ noServer: true });
+const sockAuth = makeRequestAuthenticator((input) => {
+  if (input?.headers?.secret === 'fancysock') return { name: 'james' };
 
-router.upgrade((request, socket, head) => {
-  // perform your authentication here
-  const extraAttachmentData = { client_id: 123 };
+  return null;
+});
 
-  websockServer.handleUpgrade(request, socket, head, (ws) => {
+router.upgrade('/sockme', { authenticator: sockAuth }, ({ request, response, head, identity }) =>  {
+  console.log('in sockme upgrade handler');
+
+  const websockServer = new WebSocketServer({ noServer: true });
+  websockServer.handleUpgrade(request, request.socket, head, (ws) => {
     ws.on('message', (message) => {
-      console.log(extraAttachmentData.client_id, 'received: %s', message);
+      console.log(identity.name, 'received: %s', message);
+      ws.send(`echo: ${message}`, { mask: true });
     });
 
     ws.on('close', () => {
-      console.log(extraAttachmentData.client_id, 'Client disconnected');
+      console.log(identity.name, 'Client disconnected');
     });
   });
 });

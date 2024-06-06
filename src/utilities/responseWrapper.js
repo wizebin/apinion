@@ -30,7 +30,7 @@ function collectBody(request) {
  * @param {function} func
  * @param {{ authenticator: function }} config
  */
-export function responseWrapper(func, config, apinionRouter) {
+export function responseWrapper(func, config, apinionRouter, type) {
   if (typeof func !== 'function') {
     if (typeof config === 'function') {
       func = config;
@@ -42,14 +42,14 @@ export function responseWrapper(func, config, apinionRouter) {
     }
   }
 
-  return async (request, response) => {
+  return async (request, response, extras) => {
     try {
       if (!config.noParse) {
         request.raw = await collectBody(request);
         const body = parseBody(request.raw.toString());
         request.body = body;
       }
-      const params = { request, response, body: config.noParse ? undefined : request.body, query: request.query, headers: request.headers, params: Object.assign({}, request.query || {}, request.body || {}) };
+      const params = { request, response, body: config.noParse ? undefined : request.body, query: request.query, headers: request.headers, params: Object.assign({}, request.query || {}, request.body || {}), ...extras };
       if (config.authenticator) {
         params.identity = await config.authenticator(params);
       }
@@ -72,22 +72,28 @@ export function responseWrapper(func, config, apinionRouter) {
         params.hidden = data;
       }
       const endpointResponse = await func(params);
-      if (!response._headerSent) {
-        if (typeof endpointResponse === 'string') {
-          response.send(endpointResponse);
-        } else {
-          response.json(endpointResponse);
+
+      if (type === 'upgrade') {
+        // upgrade requests should not have information automatically sent to the client
+      } else {
+        if (!response._headerSent) {
+          if (typeof endpointResponse === 'string') {
+            response.send(endpointResponse);
+          } else {
+            response.json(endpointResponse);
+          }
         }
       }
     } catch (err) {
       try {
-        await config?.onError?.({ error: err, config, request, response });
-        await apinionRouter?.onError?.({ error: err, config, request, response });
+        await config?.onError?.({ error: err, config, request, response, ...extras });
+        await apinionRouter?.onError?.({ error: err, config, request, response, ...extras });
       } catch (subError) {
         console.error(`custom error handler threw error (check your onError handler in your ${config?.route || request.originalUrl} endpoint) (check your apinionRouter.onError function)`, subError);
       }
 
       if (!response._headerSent) {
+        // this gets tricky with upgrade requests, you can manually set this flag in your config error handler if you want to avoid the extra data
         applyHttpError(request, response, err);
       }
     }

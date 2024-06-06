@@ -28,6 +28,17 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "Execute Current File Mjs",
+      "program": "${file}",
+      "runtimeExecutable": "node",
+      "envFile": "${workspaceFolder}/deployment/secrets/production.env",
+      "runtimeArgs": ["--nolazy"],
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": []
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "Start Server",
       "program": "${workspaceFolder}/express/index.js",
       "runtimeExecutable": "${workspaceFolder}/node_modules/.bin/babel-node",

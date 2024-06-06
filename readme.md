@@ -315,30 +315,29 @@ We recommend installing the 'ws' package to help handle the specifics, here's ho
 
 ### For one specific endpoint
 
+Keep in mind expressjs does not provide an upgrade verb, this work is fairly rickety and while it works for some use cases it definitely will not work for every use case. For a more generally acceptable solution you can use the global upgrade example below.
+
 ```javascript
-import { Router } from 'apinion';
+import { Router, makeHardcodedBasicAuthenticator } from 'apinion';
 import { WebSocketServer } from 'ws';
 
 const router = new Router();
 
-// you can of course use any authenticator, and use the identity in your function body
-router.any('/connect_sock', {}, ({ request }) => {
-  const { socket } = request;
+const sockAuth = makeHardcodedBasicAuthenticator([{ username: 'somebody', password: 'withapass' }]);
 
-  return new Promise((resolve, reject) => {
-    const websockServer = new WebSocketServer({ noServer: true });
+router.upgrade('/sockme', { authenticator: sockAuth }, ({ request, response, head, identity, socket }) =>  {
+  const websockServer = new WebSocketServer({ noServer: true });
 
-    websockServer.handleUpgrade(request, socket, Buffer.alloc(0), (ws) => {
-      ws.on('message', (message) => {
-        console.log('received: %s', message);
-        ws.send(`echoing to ${identity.username}: ${message}`, { mask: true });
-      });
+  websockServer.handleUpgrade(request, socket, head, (ws) => {
+    console.log(identity.username, 'Client connected');
 
-      ws.on('close', () => {
-        console.log('Client disconnected');
+    ws.on('message', (message) => {
+    console.log(identity.username, 'Client message', message);
+      ws.send(`echo: ${message}`, { mask: true });
+    });
 
-        resolve({ message: 'disconnected'});
-      });
+    ws.on('close', () => {
+      console.log(identity.username, 'Client disconnected');
     });
   });
 });
@@ -353,12 +352,11 @@ import { Router } from 'apinion';
 
 const router = new Router();
 
-const websockServer = new WebSocketServer({ noServer: true });
-
-router.upgrade((request, socket, head) => {
+router.globalUpgrade((request, socket, head) => {
   // perform your authentication here, keep in mind you have no express response available, so you will have to manually create a response and send it via socket.write
   const authData = { client_id: 123 };
 
+  const websockServer = new WebSocketServer({ noServer: true });
   websockServer.handleUpgrade(request, socket, head, (ws) => {
     ws.on('message', (message) => {
       console.log(authData.client_id, 'received: %s', message);
