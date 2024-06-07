@@ -4,6 +4,7 @@ import { joinWithSingle } from './utilities/joinWithSingle';
 import { responseWrapper } from './utilities/responseWrapper';
 import { HttpError, applyHttpError } from './utilities/HttpError';
 import { wsRequest, wsResponse } from './utilities/websock';
+import { parseQueryParamsFromUrl } from './utilities/parseQueryParams';
 
 export class Router {
   /**
@@ -257,8 +258,17 @@ export class Router {
   upgrade = (route, config, callback) => {
     config = config || {};
     config.noParse = true; // must have noParse to avoid piping the socket
-    this.upgradeRoutes.push(this.makeRouteDetails('upgrade', route, config, callback));
-    this.globalUpgrade(this.handleInternalUpgrade); // deduplicates
+    const routeDetails = this.makeRouteDetails('upgrade', route, config, callback);
+    this.propagateUpgradeToRootRouter(routeDetails[0], routeDetails[routeDetails.length - 1]);
+  }
+
+  propagateUpgradeToRootRouter = (fullRoute, callback) => {
+    if (this.parent) {
+      this.parent.propagateUpgradeToRootRouter(fullRoute, callback);
+    } else {
+      this.upgradeRoutes.push([fullRoute, callback]);
+      this.globalUpgrade(this.handleInternalUpgrade); // deduplicates
+    }
   }
 
   handleInternalUpgrade = (request, socket, head) => {
@@ -273,6 +283,7 @@ export class Router {
         const innerRequest = new wsRequest();
         Object.assign(innerRequest, request);
         innerRequest.originalUrl = url;
+        innerRequest.query = parseQueryParamsFromUrl(url);
 
         const innerResponse = new wsResponse(request, socket, { highWaterMark: socket.writableHighWaterMark, rejectNonStandardBodyWrites: false, keepAliveTimeout: 0, maxRequestsPerSocket: 0, shouldKeepAlive: true });
 

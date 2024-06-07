@@ -313,6 +313,7 @@ export class Router {
         headers: object;
         params: object;
     }) => void) => void;
+    propagateUpgradeToRootRouter: (fullRoute: any, callback: any) => void;
     handleInternalUpgrade: (request: any, socket: any, head: any) => void;
     /**
      * Add a route that responds to ANY requests, GET, POST, PUT, PATCH, DELETE, OPTIONS

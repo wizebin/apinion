@@ -1,8 +1,8 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@babel/runtime/regenerator'), require('@babel/runtime/helpers/asyncToGenerator'), require('@babel/runtime/helpers/classCallCheck'), require('@babel/runtime/helpers/typeof'), require('@babel/runtime/helpers/toConsumableArray'), require('@babel/runtime/helpers/createClass'), require('@babel/runtime/helpers/defineProperty'), require('express'), require('stream'), require('@babel/runtime/helpers/assertThisInitialized'), require('@babel/runtime/helpers/inherits'), require('@babel/runtime/helpers/possibleConstructorReturn'), require('@babel/runtime/helpers/getPrototypeOf'), require('http')) :
-  typeof define === 'function' && define.amd ? define(['exports', '@babel/runtime/regenerator', '@babel/runtime/helpers/asyncToGenerator', '@babel/runtime/helpers/classCallCheck', '@babel/runtime/helpers/typeof', '@babel/runtime/helpers/toConsumableArray', '@babel/runtime/helpers/createClass', '@babel/runtime/helpers/defineProperty', 'express', 'stream', '@babel/runtime/helpers/assertThisInitialized', '@babel/runtime/helpers/inherits', '@babel/runtime/helpers/possibleConstructorReturn', '@babel/runtime/helpers/getPrototypeOf', 'http'], factory) :
-  (global = global || self, factory(global.apinion = {}, global._regeneratorRuntime, global._asyncToGenerator, global._classCallCheck, global._typeof, global._toConsumableArray, global._createClass, global._defineProperty, global.express, global.stream, global._assertThisInitialized, global._inherits, global._possibleConstructorReturn, global._getPrototypeOf, global.http));
-}(this, (function (exports, _regeneratorRuntime, _asyncToGenerator, _classCallCheck, _typeof, _toConsumableArray, _createClass, _defineProperty, express, stream, _assertThisInitialized, _inherits, _possibleConstructorReturn, _getPrototypeOf, http) { 'use strict';
+  typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('@babel/runtime/regenerator'), require('@babel/runtime/helpers/asyncToGenerator'), require('@babel/runtime/helpers/classCallCheck'), require('@babel/runtime/helpers/typeof'), require('@babel/runtime/helpers/toConsumableArray'), require('@babel/runtime/helpers/createClass'), require('@babel/runtime/helpers/defineProperty'), require('express'), require('stream'), require('@babel/runtime/helpers/assertThisInitialized'), require('@babel/runtime/helpers/inherits'), require('@babel/runtime/helpers/possibleConstructorReturn'), require('@babel/runtime/helpers/getPrototypeOf'), require('http'), require('@babel/runtime/helpers/slicedToArray')) :
+  typeof define === 'function' && define.amd ? define(['exports', '@babel/runtime/regenerator', '@babel/runtime/helpers/asyncToGenerator', '@babel/runtime/helpers/classCallCheck', '@babel/runtime/helpers/typeof', '@babel/runtime/helpers/toConsumableArray', '@babel/runtime/helpers/createClass', '@babel/runtime/helpers/defineProperty', 'express', 'stream', '@babel/runtime/helpers/assertThisInitialized', '@babel/runtime/helpers/inherits', '@babel/runtime/helpers/possibleConstructorReturn', '@babel/runtime/helpers/getPrototypeOf', 'http', '@babel/runtime/helpers/slicedToArray'], factory) :
+  (global = global || self, factory(global.apinion = {}, global._regeneratorRuntime, global._asyncToGenerator, global._classCallCheck, global._typeof, global._toConsumableArray, global._createClass, global._defineProperty, global.express, global.stream, global._assertThisInitialized, global._inherits, global._possibleConstructorReturn, global._getPrototypeOf, global.http, global._slicedToArray));
+}(this, (function (exports, _regeneratorRuntime, _asyncToGenerator, _classCallCheck, _typeof, _toConsumableArray, _createClass, _defineProperty, express, stream, _assertThisInitialized, _inherits, _possibleConstructorReturn, _getPrototypeOf, http, _slicedToArray) { 'use strict';
 
   _regeneratorRuntime = _regeneratorRuntime && Object.prototype.hasOwnProperty.call(_regeneratorRuntime, 'default') ? _regeneratorRuntime['default'] : _regeneratorRuntime;
   _asyncToGenerator = _asyncToGenerator && Object.prototype.hasOwnProperty.call(_asyncToGenerator, 'default') ? _asyncToGenerator['default'] : _asyncToGenerator;
@@ -18,6 +18,7 @@
   _possibleConstructorReturn = _possibleConstructorReturn && Object.prototype.hasOwnProperty.call(_possibleConstructorReturn, 'default') ? _possibleConstructorReturn['default'] : _possibleConstructorReturn;
   _getPrototypeOf = _getPrototypeOf && Object.prototype.hasOwnProperty.call(_getPrototypeOf, 'default') ? _getPrototypeOf['default'] : _getPrototypeOf;
   http = http && Object.prototype.hasOwnProperty.call(http, 'default') ? http['default'] : http;
+  _slicedToArray = _slicedToArray && Object.prototype.hasOwnProperty.call(_slicedToArray, 'default') ? _slicedToArray['default'] : _slicedToArray;
 
   function getTypeString(data) {
     var stringType = _typeof(data);
@@ -795,6 +796,45 @@
   function _unsupportedIterableToArray$3(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$3(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$3(o, minLen); }
 
   function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+  function parseQueryParams(queryString) {
+    var sections = queryString.split('&');
+    var output = {};
+
+    var _iterator = _createForOfIteratorHelper$3(sections),
+        _step;
+
+    try {
+      for (_iterator.s(); !(_step = _iterator.n()).done;) {
+        var section = _step.value;
+        var parts = section.split('=').map(function (item) {
+          return decodeURIComponent(item);
+        });
+        output[parts[0]] = parts[1];
+      }
+    } catch (err) {
+      _iterator.e(err);
+    } finally {
+      _iterator.f();
+    }
+
+    return output;
+  }
+  function parseQueryParamsFromUrl(url) {
+    var _url$split = url.split('?'),
+        _url$split2 = _slicedToArray(_url$split, 2),
+        path = _url$split2[0],
+        queryString = _url$split2[1];
+
+    if (!queryString) return {};
+    return parseQueryParams(queryString);
+  }
+
+  function _createForOfIteratorHelper$4(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$4(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+  function _unsupportedIterableToArray$4(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$4(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$4(o, minLen); }
+
+  function _arrayLikeToArray$4(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
   var Router = /*#__PURE__*/function () {
     /**
      * @param {express} app
@@ -1041,16 +1081,26 @@
         config = config || {};
         config.noParse = true; // must have noParse to avoid piping the socket
 
-        _this.upgradeRoutes.push(_this.makeRouteDetails('upgrade', route, config, callback));
+        var routeDetails = _this.makeRouteDetails('upgrade', route, config, callback);
 
-        _this.globalUpgrade(_this.handleInternalUpgrade); // deduplicates
+        _this.propagateUpgradeToRootRouter(routeDetails[0], routeDetails[routeDetails.length - 1]);
+      });
 
+      _defineProperty(this, "propagateUpgradeToRootRouter", function (fullRoute, callback) {
+        if (_this.parent) {
+          _this.parent.propagateUpgradeToRootRouter(fullRoute, callback);
+        } else {
+          _this.upgradeRoutes.push([fullRoute, callback]);
+
+          _this.globalUpgrade(_this.handleInternalUpgrade); // deduplicates
+
+        }
       });
 
       _defineProperty(this, "handleInternalUpgrade", function (request, socket, head) {
         var url = request.url;
 
-        var _iterator = _createForOfIteratorHelper$3(_this.upgradeRoutes),
+        var _iterator = _createForOfIteratorHelper$4(_this.upgradeRoutes),
             _step;
 
         try {
@@ -1064,6 +1114,7 @@
               var innerRequest = new wsRequest();
               Object.assign(innerRequest, request);
               innerRequest.originalUrl = url;
+              innerRequest.query = parseQueryParamsFromUrl(url);
               var innerResponse = new wsResponse(request, socket, {
                 highWaterMark: socket.writableHighWaterMark,
                 rejectNonStandardBodyWrites: false,
@@ -1139,7 +1190,7 @@
         var _this$upgradeFunction;
 
         if ((_this$upgradeFunction = _this.upgradeFunctions) !== null && _this$upgradeFunction !== void 0 && _this$upgradeFunction.length) {
-          var _iterator2 = _createForOfIteratorHelper$3(_this.upgradeFunctions),
+          var _iterator2 = _createForOfIteratorHelper$4(_this.upgradeFunctions),
               _step2;
 
           try {
@@ -1161,7 +1212,7 @@
           routes = [routes];
         }
 
-        var _iterator3 = _createForOfIteratorHelper$3(routes),
+        var _iterator3 = _createForOfIteratorHelper$4(routes),
             _step3;
 
         try {

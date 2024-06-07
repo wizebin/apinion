@@ -70,21 +70,47 @@ const sockAuth = makeRequestAuthenticator((input) => {
   return null;
 });
 
-router.upgrade('/sockme', { authenticator: sockAuth }, ({ request, response, head, identity }) =>  {
+router.upgrade('/sockme', { authenticator: sockAuth }, ({ request, response, head, identity, params, query }) =>  {
+  console.log('sockme params', params, request?.query, query);
   console.log('in sockme upgrade handler');
 
   const websockServer = new WebSocketServer({ noServer: true });
   websockServer.handleUpgrade(request, request.socket, head, (ws) => {
     ws.on('message', (message) => {
-      console.log(identity.name, 'received: %s', message);
+      console.log(identity.name, 'sockme received: %s', message);
       ws.send(`echo: ${message}`, { mask: true });
     });
 
     ws.on('close', () => {
-      console.log(identity.name, 'Client disconnected');
+      console.log(identity.name, 'sockme client disconnected');
     });
   });
 });
+
+router.applyRoutes([{
+  path: 'websock',
+  subrouter: [{
+    path: 'internal',
+    subrouter: [{
+      path: 'sockyou',
+      upgrade: makeEndpoint({}, ({ request, response, head }) => {
+        console.log('in sockyou upgrade handler');
+
+        const websockServer = new WebSocketServer({ noServer: true });
+        websockServer.handleUpgrade(request, request.socket, head, (ws) => {
+          ws.on('message', (message) => {
+            console.log('sockyou received: %s', message);
+            ws.send(`echo: ${message}`, { mask: true });
+          });
+
+          ws.on('close', () => {
+            console.log('sockyou client disconnected');
+          });
+        });
+      }),
+    }]
+  }],
+}])
 
 console.log('starting server at http://localhost:5550/');
 router.listen(5550);
