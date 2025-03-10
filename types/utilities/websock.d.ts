@@ -5,7 +5,7 @@ export class wsResponse {
     /**
      * @type {import('net').Socket}
      */
-    sock: import('net').Socket;
+    sock: import("net").Socket;
     status(code: any): this;
     statusCode: any;
     getHeadersString(): void;

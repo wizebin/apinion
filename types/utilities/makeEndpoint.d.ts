@@ -17,9 +17,9 @@ export function makeEndpoint(config: {
     }) => any;
     noParse: boolean | null;
     onError: (arg0: {
-        request;
-        response;
-        error;
+        request: any;
+        response: any;
+        error: any;
     }) => null;
 }, executionFunction: (arg0: {
     request: express.Request;

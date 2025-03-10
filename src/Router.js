@@ -405,10 +405,11 @@ export class Router {
   expressApp() {
     return this.app;
   }
-  enableCors = (origin = '*', headers = 'Origin, X-Requested-With, Content-Type, Accept, Authorization') => {
+  enableCors = (origin = '*', headers = 'Origin, X-Requested-With, Content-Type, Accept, Authorization', allowedMethods = 'GET, POST, PUT, PATCH, DELETE, OPTIONS') => {
     this.app.use((req, res, next) => {
       res.header('Access-Control-Allow-Origin', origin);
       res.header('Access-Control-Allow-Headers', headers);
+      res.header('Access-Control-Allow-Methods', allowedMethods);
       next();
     });
     this.app.options('*', (request, result) => result.status(200).send());

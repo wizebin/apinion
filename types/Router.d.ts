@@ -102,9 +102,9 @@ export class Router {
         }) => any;
         noParse: boolean | null;
         onError: (arg0: {
-            request;
-            response;
-            error;
+            request: any;
+            response: any;
+            error: any;
         }) => null;
     }, callback: (arg0: {
         request: express.Request;
@@ -135,9 +135,9 @@ export class Router {
         }) => any;
         noParse: boolean | null;
         onError: (arg0: {
-            request;
-            response;
-            error;
+            request: any;
+            response: any;
+            error: any;
         }) => null;
     }, callback: (arg0: {
         request: express.Request;
@@ -168,9 +168,9 @@ export class Router {
         }) => any;
         noParse: boolean | null;
         onError: (arg0: {
-            request;
-            response;
-            error;
+            request: any;
+            response: any;
+            error: any;
         }) => null;
     }, callback: (arg0: {
         request: express.Request;
@@ -201,9 +201,9 @@ export class Router {
         }) => any;
         noParse: boolean | null;
         onError: (arg0: {
-            request;
-            response;
-            error;
+            request: any;
+            response: any;
+            error: any;
         }) => null;
     }, callback: (arg0: {
         request: express.Request;
@@ -234,9 +234,9 @@ export class Router {
         }) => any;
         noParse: boolean | null;
         onError: (arg0: {
-            request;
-            response;
-            error;
+            request: any;
+            response: any;
+            error: any;
         }) => null;
     }, callback: (arg0: {
         request: express.Request;
@@ -267,9 +267,9 @@ export class Router {
         }) => any;
         noParse: boolean | null;
         onError: (arg0: {
-            request;
-            response;
-            error;
+            request: any;
+            response: any;
+            error: any;
         }) => null;
     }, callback: (arg0: {
         request: express.Request;
@@ -300,9 +300,9 @@ export class Router {
         }) => any;
         noParse: boolean | null;
         onError: (arg0: {
-            request;
-            response;
-            error;
+            request: any;
+            response: any;
+            error: any;
         }) => null;
     }, callback: (arg0: {
         request: wsRequest;
@@ -335,9 +335,9 @@ export class Router {
         }) => any;
         noParse: boolean | null;
         onError: (arg0: {
-            request;
-            response;
-            error;
+            request: any;
+            response: any;
+            error: any;
         }) => null;
     }, callback: (arg0: {
         request: express.Request;
@@ -371,22 +371,22 @@ export class Router {
      * @param {Array.<{ path, executor, get, options, delete: deleteRoute, patch, post, put, subrouter, any }>} routes
      */
     applyRoutes: (routes: Array<{
-        path;
-        executor;
-        get;
-        options;
+        path: any;
+        executor: any;
+        get: any;
+        options: any;
         delete: deleteRoute;
-        patch;
-        post;
-        put;
-        subrouter;
-        any;
+        patch: any;
+        post: any;
+        put: any;
+        subrouter: any;
+        any: any;
     }>) => void;
     /**
      * @returns {express.Express}
      */
     expressApp(): express.Express;
-    enableCors: (origin?: string, headers?: string) => void;
+    enableCors: (origin?: string, headers?: string, allowedMethods?: string) => void;
     close: () => void;
     listen: (port: any, callback: any) => Promise<any>;
     connection: any;

@@ -1249,10 +1249,12 @@ var Router = /*#__PURE__*/function () {
     _defineProperty(this, "enableCors", function () {
       var origin = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '*';
       var headers = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'Origin, X-Requested-With, Content-Type, Accept, Authorization';
+      var allowedMethods = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
 
       _this.app.use(function (req, res, next) {
         res.header('Access-Control-Allow-Origin', origin);
         res.header('Access-Control-Allow-Headers', headers);
+        res.header('Access-Control-Allow-Methods', allowedMethods);
         next();
       });
 
