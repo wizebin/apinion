@@ -1,4 +1,4 @@
-import * as testing from './joinWithSingle.js';
+import * as testing from './joinWithSingle.ts';
 
 describe('joinWithSingle.test', () => {
   it('joins correctly', () => {

@@ -1,12 +1,13 @@
 import { getTypeString } from './getTypeString';
+import { HttpError } from './HttpError';
 
-const startingChars = {
+const startingChars: Record<string, string> = {
   '{': 'json',
   '[': 'json',
   '<': 'xml',
 };
 
-export function parseBody(input) {
+export function parseBody(input: any): any {
   if (!input) return null;
   const inputType = getTypeString(input);
   if (inputType === 'string') {
@@ -21,9 +22,9 @@ export function parseBody(input) {
     }
 
     const sections = input.split('&');
-    const output = {};
+    const output: Record<string, string> = {};
     for (let section of sections) {
-      const parts = section.split('=').map(item => decodeURIComponent(item));
+      const parts = section.split('=').map((item: string) => decodeURIComponent(item));
       output[parts[0]] = parts[1];
     }
     return output;
@@ -33,7 +34,8 @@ export function parseBody(input) {
     return input;
   }
 
-
-
-  throw new HttpError({ status: 500, message: `issue parsing body, it came in as ${inputType}, but string is the only supported method` })
+  throw new HttpError({ 
+    status: 500, 
+    message: `issue parsing body, it came in as ${inputType}, but string is the only supported method` 
+  });
 }

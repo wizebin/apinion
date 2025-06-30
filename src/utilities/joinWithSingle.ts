@@ -1,4 +1,8 @@
-function findIndexInDirection(string, predicate, direction = 1) {
+function findIndexInDirection(
+  string: string,
+  predicate: (char: string, index: number) => boolean,
+  direction: number = 1
+): number | null {
   if (direction > 0) {
     for (let dex = 0; dex < string.length; dex += 1) {
       if (predicate(string[dex], dex)) return dex;
@@ -12,13 +16,13 @@ function findIndexInDirection(string, predicate, direction = 1) {
   return null;
 }
 
-export function joinWithSingle(parts, joiner) {
+export function joinWithSingle(parts: string[], joiner?: string): string {
   if (!joiner) return parts.join('');
 
   const cleanedPartArray = parts.map((item, dex) => {
     const firstNonJoiner = dex === 0 ? 0 : findIndexInDirection(item, (letter => (letter !== joiner)), 1);
     const finalNonJoiner = dex === parts.length - 1 ? item.length : findIndexInDirection(item, (letter => letter !== joiner), -1);
-    return item.slice(firstNonJoiner, finalNonJoiner);
+    return item.slice(firstNonJoiner || 0, finalNonJoiner || undefined);
   });
 
   return cleanedPartArray.join(joiner);

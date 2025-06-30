@@ -1,7 +1,9 @@
-import babel from 'rollup-plugin-babel';
+import babel from '@rollup/plugin-babel';
+import typescript from '@rollup/plugin-typescript';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
 
 export default {
-  input: './src/index.js',
+  input: './src/index.ts',
   output: [{
     format: 'umd',
     file: './dist/index.js',
@@ -13,11 +15,21 @@ export default {
     name: 'apinion',
     sourcemap: true,
   }],
-  external: [],
+  external: ['express', 'stream', 'http', '@babel/runtime/helpers/typeof'],
   plugins: [
+    nodeResolve({
+      extensions: ['.js', '.ts']
+    }),
+    typescript({
+      tsconfig: './tsconfig.json',
+      declaration: true,
+      declarationDir: './dist',
+      rootDir: './src'
+    }),
     babel({
       exclude: 'node_modules/**',
-      runtimeHelpers: true,
+      babelHelpers: 'runtime',
+      extensions: ['.js', '.ts'],
     }),
   ],
 };

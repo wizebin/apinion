@@ -1,8 +1,8 @@
-export function getTypeString(data) {
+export function getTypeString(data: any): string {
   const stringType = typeof data;
   if (stringType === 'object') {
     if (data === null) return 'null';
-    const stringified = toString.apply(data);
+    const stringified = Object.prototype.toString.call(data);
     if (stringified.length > 2 && stringified[0] === '[' && stringified[stringified.length - 1] === ']') {
       const splits = stringified.substr(1, stringified.length - 2).split(' ');
       if (splits.length > 1) {

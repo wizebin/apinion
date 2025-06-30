@@ -15,7 +15,7 @@
   },
   "main": "dist/index.js",
   "module": "dist/index.mjs",
-  "types": "types/index.d.ts",
+  "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/wizebin/apinion"
@@ -24,15 +24,15 @@
     "test": "jest",
     "dev": "NODE_ENV=development rollup -c rollup.config.js",
     "build": "NODE_ENV=production rollup -c rollup.config.js",
-    "maketypes": "tsc --allowJs true --emitDeclarationOnly true --declaration ./src/index.js --declarationDir types",
+    "typecheck": "tsc --noEmit",
+    "maketypes": "tsc --declaration --emitDeclarationOnly --declarationDir types",
     "generate-docs": "node_modules/.bin/jsdoc --configure .jsdoc.json --verbose"
   },
   "dependencies": {
     "@babel/runtime": "^7.23.4",
     "body-parser": "^1.19.0",
     "express": "^4.19.2",
-    "helmet": "^4.2.0",
-    "typescript": "^5.8.2"
+    "helmet": "^4.2.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.12.10",
@@ -45,16 +45,21 @@
     "@babel/plugin-syntax-dynamic-import": "^7.0.0",
     "@babel/plugin-transform-runtime": "^7.12.15",
     "@babel/preset-env": "^7.12.10",
+    "@babel/preset-typescript": "^7.27.1",
     "@babel/register": "^7.12.10",
-    "babel-preset-es2015-rollup": "^3.0.0",
+    "@rollup/plugin-babel": "^6.0.4",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.4",
+    "@types/express": "^5.0.3",
     "jest": "^24.9.0",
     "jsdoc": "^3.6.2",
     "jsdoc-export-default-interop": "^0.3.1",
     "minami": "^1.2.3",
     "mock-local-storage": "^1.0.5",
     "node-fetch": "^2.6.1",
-    "rollup": "^1.16.7",
-    "rollup-plugin-babel": "^4.0.1"
+    "rollup": "^4.44.1",
+    "tslib": "^2.8.1",
+    "typescript": "^5.8.2"
   },
   "engines": {
     "node": ">=6.0.0"

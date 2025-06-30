@@ -1,41 +1,47 @@
-import http from 'http';
+import * as http from 'http';
+import { Socket } from 'net';
 
 export class wsRequest extends http.IncomingMessage {
   constructor() {
-    super();
+    super({} as any);
   }
 }
 
 export class wsResponse extends http.OutgoingMessage {
-  constructor(request, socket, configuration) {
-    super(request, configuration);
-    /**
-     * @type {import('net').Socket}
-     */
+  public sock: Socket;
+  public statusCode: number;
+  public _headerSent: boolean = false;
+
+  constructor(_request: http.IncomingMessage, socket: Socket, _configuration?: any) {
+    super();
     this.sock = socket;
 
-    if (!this[Symbol('kSocket')]) {
-      this[Symbol('kSocket')] = socket;
+    // Handle internal socket symbol
+    const socketSymbol = Symbol.for('kSocket');
+    if (!(this as any)[socketSymbol]) {
+      (this as any)[socketSymbol] = socket;
     }
+    
+    this.statusCode = 200;
   }
 
-  status(code) {
+  status(code: number): this {
     this.statusCode = code;
     return this;
   }
 
-  getHeadersString() {
-
+  getHeadersString(): void {
+    // Method implementation if needed
   }
 
-  send(data) {
-    if (!this.sock || this.sock?.destroyed) {
+  send(data: any): void {
+    if (!this.sock || this.sock.destroyed) {
       return;
     }
 
     this.status(this.statusCode || 200);
-    if (this._header) {
-      this.sock.write(this._header);
+    if ((this as any)._header) {
+      this.sock.write((this as any)._header);
     } else {
       this.sock.write('HTTP/1.1 ' + this.statusCode + ' ' + http.STATUS_CODES[this.statusCode] + '\r\n');
     }
@@ -62,16 +68,22 @@ export class wsResponse extends http.OutgoingMessage {
     // }
   }
 
-  json(data) {
+  json(data: any): void {
     this.send(JSON.stringify(data));
   }
 
-  _implicitHeader() {
-    if (this._header) {
+  _implicitHeader(): void {
+    if ((this as any)._header) {
       return;
     }
 
-    this._storeHeader(this.method + ' ' + this.path + ' HTTP/1.1\r\n',
-                      this[Symbol('kOutHeaders')]);
+    const method = (this as any).method || 'GET';
+    const path = (this as any).path || '/';
+    const kOutHeaders = Symbol.for('kOutHeaders');
+    
+    (this as any)._storeHeader(
+      method + ' ' + path + ' HTTP/1.1\r\n',
+      (this as any)[kOutHeaders]
+    );
   }
 }
