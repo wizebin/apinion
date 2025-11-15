@@ -1,6 +1,6 @@
 {
   "name": "apinion",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "description": "Opinionated API framework built on express",
   "homepage": "https://github.com/wizebin/apinion",
   "bugs": {
@@ -18,14 +18,14 @@
   "types": "types/index.d.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/wizebin/apinion"
+    "url": "git+https://github.com/wizebin/apinion.git"
   },
   "scripts": {
     "test": "jest",
     "dev": "NODE_ENV=development rollup -c rollup.config.js",
     "build": "NODE_ENV=production rollup -c rollup.config.js",
     "maketypes": "tsc --allowJs true --emitDeclarationOnly true --declaration ./src/index.js --declarationDir types",
-    "generate-docs": "node_modules/.bin/jsdoc --configure .jsdoc.json --verbose"
+    "generate-docs": "jsdoc --configure .jsdoc.json --verbose"
   },
   "dependencies": {
     "@babel/runtime": "^7.23.4",

@@ -4,7 +4,7 @@ export class HttpError {
     constructor({ status, message, data }: {
         status: any;
         message: any;
-        data: any;
+        data?: any;
     });
     name: string;
     status: any;

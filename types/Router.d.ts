@@ -1,3 +1,32 @@
+export type RouteConfig = {
+    required?: string[] | null;
+    hidden_required?: string[] | null;
+    authenticator?: (arg0: {
+        request: express.Request;
+        response: express.Response;
+        body: object;
+        query: object;
+        headers: object;
+        params: object;
+    }) => any;
+    noParse?: boolean | null;
+    onError?: (arg0: {
+        request: any;
+        response: any;
+        error: any;
+    }) => null;
+};
+
+export type RouteCallback = (arg0: {
+    request?: express.Request;
+    response?: express.Response;
+    identity?: any;
+    body?: object;
+    query?: object;
+    headers?: object;
+    params?: object;
+}) => void
+
 export class Router {
     /**
      * @param {express} app
@@ -89,32 +118,7 @@ export class Router {
      * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
      * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} callback
      */
-    get: (route: string | RegExp, config: {
-        required: string[] | null;
-        hidden_required: string[] | null;
-        authenticator: (arg0: {
-            request: express.Request;
-            response: express.Response;
-            body: object;
-            query: object;
-            headers: object;
-            params: object;
-        }) => any;
-        noParse: boolean | null;
-        onError: (arg0: {
-            request: any;
-            response: any;
-            error: any;
-        }) => null;
-    }, callback: (arg0: {
-        request: express.Request;
-        response: express.Response;
-        identity: any;
-        body: object;
-        query: object;
-        headers: object;
-        params: object;
-    }) => void) => any;
+    get: (route: string | RegExp, config: RouteConfig, callback: RouteCallback) => any;
     /**
      * Add a route that responds to POST requests, body will never be filled
      * create your authenticator with one of the maxXXXAuthenticator functions, or create a custom function throwing an HttpError or returning an identity
@@ -122,32 +126,7 @@ export class Router {
      * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
      * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} callback
      */
-    post: (route: string | RegExp, config: {
-        required: string[] | null;
-        hidden_required: string[] | null;
-        authenticator: (arg0: {
-            request: express.Request;
-            response: express.Response;
-            body: object;
-            query: object;
-            headers: object;
-            params: object;
-        }) => any;
-        noParse: boolean | null;
-        onError: (arg0: {
-            request: any;
-            response: any;
-            error: any;
-        }) => null;
-    }, callback: (arg0: {
-        request: express.Request;
-        response: express.Response;
-        identity: any;
-        body: object;
-        query: object;
-        headers: object;
-        params: object;
-    }) => void) => any;
+    post: (route: string | RegExp, config: RouteConfig, callback: RouteCallback) => any;
     /**
      * Add a route that responds to PUT requests
      * create your authenticator with one of the maxXXXAuthenticator functions, or create a custom function throwing an HttpError or returning an identity
@@ -155,32 +134,7 @@ export class Router {
      * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
      * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} callback
      */
-    put: (route: string | RegExp, config: {
-        required: string[] | null;
-        hidden_required: string[] | null;
-        authenticator: (arg0: {
-            request: express.Request;
-            response: express.Response;
-            body: object;
-            query: object;
-            headers: object;
-            params: object;
-        }) => any;
-        noParse: boolean | null;
-        onError: (arg0: {
-            request: any;
-            response: any;
-            error: any;
-        }) => null;
-    }, callback: (arg0: {
-        request: express.Request;
-        response: express.Response;
-        identity: any;
-        body: object;
-        query: object;
-        headers: object;
-        params: object;
-    }) => void) => any;
+    put: (route: string | RegExp, config: RouteConfig, callback: RouteCallback) => any;
     /**
      * Add a route that responds to PATCH requests
      * create your authenticator with one of the maxXXXAuthenticator functions, or create a custom function throwing an HttpError or returning an identity
@@ -188,32 +142,7 @@ export class Router {
      * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
      * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} callback
      */
-    patch: (route: string | RegExp, config: {
-        required: string[] | null;
-        hidden_required: string[] | null;
-        authenticator: (arg0: {
-            request: express.Request;
-            response: express.Response;
-            body: object;
-            query: object;
-            headers: object;
-            params: object;
-        }) => any;
-        noParse: boolean | null;
-        onError: (arg0: {
-            request: any;
-            response: any;
-            error: any;
-        }) => null;
-    }, callback: (arg0: {
-        request: express.Request;
-        response: express.Response;
-        identity: any;
-        body: object;
-        query: object;
-        headers: object;
-        params: object;
-    }) => void) => any;
+    patch: (route: string | RegExp, config: RouteConfig, callback: RouteCallback) => any;
     /**
      * Add a route that responds to DELETE requests
      * create your authenticator with one of the maxXXXAuthenticator functions, or create a custom function throwing an HttpError or returning an identity
@@ -221,32 +150,7 @@ export class Router {
      * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
      * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} callback
      */
-    delete: (route: string | RegExp, config: {
-        required: string[] | null;
-        hidden_required: string[] | null;
-        authenticator: (arg0: {
-            request: express.Request;
-            response: express.Response;
-            body: object;
-            query: object;
-            headers: object;
-            params: object;
-        }) => any;
-        noParse: boolean | null;
-        onError: (arg0: {
-            request: any;
-            response: any;
-            error: any;
-        }) => null;
-    }, callback: (arg0: {
-        request: express.Request;
-        response: express.Response;
-        identity: any;
-        body: object;
-        query: object;
-        headers: object;
-        params: object;
-    }) => void) => any;
+    delete: (route: string | RegExp, config: RouteConfig, callback: RouteCallback) => any;
     /**
      * Add a route that responds to OPTIONS requests, if you run enableCors this will be handled automatically
      * create your authenticator with one of the maxXXXAuthenticator functions, or create a custom function throwing an HttpError or returning an identity
@@ -254,32 +158,7 @@ export class Router {
      * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
      * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} callback
      */
-    options: (route: string | RegExp, config: {
-        required: string[] | null;
-        hidden_required: string[] | null;
-        authenticator: (arg0: {
-            request: express.Request;
-            response: express.Response;
-            body: object;
-            query: object;
-            headers: object;
-            params: object;
-        }) => any;
-        noParse: boolean | null;
-        onError: (arg0: {
-            request: any;
-            response: any;
-            error: any;
-        }) => null;
-    }, callback: (arg0: {
-        request: express.Request;
-        response: express.Response;
-        identity: any;
-        body: object;
-        query: object;
-        headers: object;
-        params: object;
-    }) => void) => any;
+    options: (route: string | RegExp, config: RouteConfig, callback: RouteCallback) => any;
     /**
      * Upgrade routes are a bit different than normal verb endpoints, this is meant to consume a websocket upgrade request, unfortunately due to some constraints with expressjs there is no way to directly attach an upgrade handler like normal so we have to consume the upgrade event and pass it to this callback, that means our route is a bit less flexible than normal and subrouters aren't easily supported
      * In your callback the request and response types will not be expressjs request and response, but rather apinion.wsRequest and apinion.wsResponse
@@ -287,31 +166,14 @@ export class Router {
      * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
      * @param {function({ request: wsRequest, response: wsResponse, identity: any, body: object, query: object, headers: object, params: object }):void} callback
      */
-    upgrade: (route: string | RegExp, config: {
-        required: string[] | null;
-        hidden_required: string[] | null;
-        authenticator: (arg0: {
-            request: express.Request;
-            response: express.Response;
-            body: object;
-            query: object;
-            headers: object;
-            params: object;
-        }) => any;
-        noParse: boolean | null;
-        onError: (arg0: {
-            request: any;
-            response: any;
-            error: any;
-        }) => null;
-    }, callback: (arg0: {
-        request: wsRequest;
-        response: wsResponse;
-        identity: any;
-        body: object;
-        query: object;
-        headers: object;
-        params: object;
+    upgrade: (route: string | RegExp, config: RouteConfig, callback: (arg0: {
+        request?: wsRequest;
+        response?: wsResponse;
+        identity?: any;
+        body?: object;
+        query?: object;
+        headers?: object;
+        params?: object;
     }) => void) => void;
     propagateUpgradeToRootRouter: (fullRoute: any, callback: any) => void;
     handleInternalUpgrade: (request: any, socket: any, head: any) => void;
@@ -322,32 +184,7 @@ export class Router {
      * @param {{ required: string[]?, hidden_required: string[]?, authenticator: function({ request: express.Request, response: express.Response, body: object, query: object, headers: object, params: object }):any, noParse: boolean?, onError: function({ request, response, error }):null }} config
      * @param {function({ request: express.Request, response: express.Response, identity: any, body: object, query: object, headers: object, params: object }):void} callback
      */
-    any: (route: string | RegExp, config: {
-        required: string[] | null;
-        hidden_required: string[] | null;
-        authenticator: (arg0: {
-            request: express.Request;
-            response: express.Response;
-            body: object;
-            query: object;
-            headers: object;
-            params: object;
-        }) => any;
-        noParse: boolean | null;
-        onError: (arg0: {
-            request: any;
-            response: any;
-            error: any;
-        }) => null;
-    }, callback: (arg0: {
-        request: express.Request;
-        response: express.Response;
-        identity: any;
-        body: object;
-        query: object;
-        headers: object;
-        params: object;
-    }) => void) => any[];
+    any: (route: string | RegExp, config: RouteConfig, callback: RouteCallback) => any[];
     /**
      * @param {express.RequestHandler} func
      * @param  {...any} passthrough
@@ -371,16 +208,16 @@ export class Router {
      * @param {Array.<{ path, executor, get, options, delete: deleteRoute, patch, post, put, subrouter, any }>} routes
      */
     applyRoutes: (routes: Array<{
-        path: any;
-        executor: any;
-        get: any;
-        options: any;
-        delete: deleteRoute;
-        patch: any;
-        post: any;
-        put: any;
-        subrouter: any;
-        any: any;
+        path?: any;
+        executor?: any;
+        get?: any;
+        options?: any;
+        delete?: deleteRoute;
+        patch?: any;
+        post?: any;
+        put?: any;
+        subrouter?: any;
+        any?: any;
     }>) => void;
     /**
      * @returns {express.Express}
