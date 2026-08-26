@@ -1,6 +1,10 @@
 import _regeneratorRuntime from '@babel/runtime/regenerator';
 import _asyncToGenerator from '@babel/runtime/helpers/asyncToGenerator';
 import _classCallCheck from '@babel/runtime/helpers/classCallCheck';
+import _inherits from '@babel/runtime/helpers/inherits';
+import _possibleConstructorReturn from '@babel/runtime/helpers/possibleConstructorReturn';
+import _getPrototypeOf from '@babel/runtime/helpers/getPrototypeOf';
+import _wrapNativeSuper from '@babel/runtime/helpers/wrapNativeSuper';
 import _typeof from '@babel/runtime/helpers/typeof';
 import _toConsumableArray from '@babel/runtime/helpers/toConsumableArray';
 import _createClass from '@babel/runtime/helpers/createClass';
@@ -8,9 +12,6 @@ import _defineProperty from '@babel/runtime/helpers/defineProperty';
 import express from 'express';
 import { Writable } from 'stream';
 import _assertThisInitialized from '@babel/runtime/helpers/assertThisInitialized';
-import _inherits from '@babel/runtime/helpers/inherits';
-import _possibleConstructorReturn from '@babel/runtime/helpers/possibleConstructorReturn';
-import _getPrototypeOf from '@babel/runtime/helpers/getPrototypeOf';
 import http from 'http';
 import _slicedToArray from '@babel/runtime/helpers/slicedToArray';
 
@@ -39,18 +40,33 @@ function getTypeString(data) {
   return stringType;
 }
 
-var HttpError$1 = function HttpError(_ref) {
-  var status = _ref.status,
-      message = _ref.message,
-      data = _ref.data;
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
 
-  _classCallCheck(this, HttpError);
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+var HttpError$1 = /*#__PURE__*/function (_Error) {
+  _inherits(HttpError, _Error);
 
-  this.name = 'HTTP Error';
-  this.status = status;
-  this.message = message;
-  this.data = data;
-};
+  var _super = _createSuper(HttpError);
+
+  function HttpError(_ref) {
+    var _this;
+
+    var status = _ref.status,
+        message = _ref.message,
+        data = _ref.data;
+
+    _classCallCheck(this, HttpError);
+
+    _this = _super.call(this);
+    _this.name = 'HTTP Error';
+    _this.status = status;
+    _this.message = message;
+    _this.data = data;
+    return _this;
+  }
+
+  return HttpError;
+}( /*#__PURE__*/_wrapNativeSuper(Error));
 function stringifyError(error) {
   if (error instanceof Error) {
     return JSON.stringify(error, Object.getOwnPropertyNames(error));
@@ -409,13 +425,13 @@ function parseBody(input) {
   });
 }
 
-function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+function _createSuper$1(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct$1(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
 
-function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+function _isNativeReflectConstruct$1() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
 var WritableBufferStream = /*#__PURE__*/function (_Writable) {
   _inherits(WritableBufferStream, _Writable);
 
-  var _super = _createSuper(WritableBufferStream);
+  var _super = _createSuper$1(WritableBufferStream);
 
   function WritableBufferStream(callback, options) {
     var _this;
@@ -464,6 +480,7 @@ function _createForOfIteratorHelper$2(o, allowArrayLike) { var it; if (typeof Sy
 function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
 
 function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+var EMPTY_BUFFER = Buffer.alloc(0);
 
 function getParams(keyList, _ref) {
   var body = _ref.body,
@@ -504,6 +521,29 @@ function collectBody(request) {
     output.on('error', reject);
     request.pipe(output);
   });
+} // Whether some middleware already owns request.body outright, in which case we
+// neither re-read the stream nor merge anything into what it produced.
+
+
+function bodyIsFinal(request) {
+  if (request.readableEnded === true) return true;
+  return request._body === true;
+}
+
+function combineBodies(parsedBody, middlewareBody) {
+  if (middlewareBody === undefined || middlewareBody === null) return parsedBody;
+  if (parsedBody === undefined || parsedBody === null) return middlewareBody;
+
+  if (getTypeString(parsedBody) === 'object' && getTypeString(middlewareBody) === 'object') {
+    return Object.assign({}, parsedBody, middlewareBody);
+  }
+
+  return middlewareBody;
+}
+
+function defaultedBody(body) {
+  if (body === undefined || body === null) return {};
+  return body;
 }
 /**
  *
@@ -533,49 +573,59 @@ function responseWrapper(func, config, apinionRouter, type) {
               _context.prev = 0;
 
               if (config.noParse) {
-                _context.next = 7;
+                _context.next = 11;
                 break;
               }
 
-              _context.next = 4;
+              if (!bodyIsFinal(request)) {
+                _context.next = 6;
+                break;
+              }
+
+              if (request.raw === undefined) request.raw = EMPTY_BUFFER;
+              _context.next = 11;
+              break;
+
+            case 6:
+              _context.next = 8;
               return collectBody(request);
 
-            case 4:
+            case 8:
               request.raw = _context.sent;
               body = parseBody(request.raw.toString());
-              request.body = body;
+              request.body = combineBodies(body, request.body);
 
-            case 7:
+            case 11:
               params = _objectSpread({
                 request: request,
                 response: response,
-                body: config.noParse ? undefined : request.body,
+                body: config.noParse ? {} : defaultedBody(request.body),
                 query: request.query,
                 headers: request.headers,
                 params: Object.assign({}, request.query || {}, request.body || {})
               }, extras);
 
               if (!config.authenticator) {
-                _context.next = 12;
+                _context.next = 16;
                 break;
               }
 
-              _context.next = 11;
+              _context.next = 15;
               return config.authenticator(params);
 
-            case 11:
+            case 15:
               params.identity = _context.sent;
 
-            case 12:
+            case 16:
               if (!config.required) {
-                _context.next = 17;
+                _context.next = 21;
                 break;
               }
 
               _getParams = getParams(config.required, params), missing = _getParams.missing, data = _getParams.data;
 
               if (!(missing.length > 0)) {
-                _context.next = 16;
+                _context.next = 20;
                 break;
               }
 
@@ -586,19 +636,19 @@ function responseWrapper(func, config, apinionRouter, type) {
                 }).join(', '))
               });
 
-            case 16:
+            case 20:
               params.required = data;
 
-            case 17:
+            case 21:
               if (!config.hidden_required) {
-                _context.next = 22;
+                _context.next = 26;
                 break;
               }
 
               _getParams2 = getParams(config.hidden, params), _missing = _getParams2.missing, _data = _getParams2.data;
 
               if (!(_missing.length > 0)) {
-                _context.next = 21;
+                _context.next = 25;
                 break;
               }
 
@@ -607,14 +657,14 @@ function responseWrapper(func, config, apinionRouter, type) {
                 message: 'your request is incomplete (this is probably because you are missing some essential hidden requirement)'
               });
 
-            case 21:
+            case 25:
               params.hidden = _data;
 
-            case 22:
-              _context.next = 24;
+            case 26:
+              _context.next = 28;
               return func(params);
 
-            case 24:
+            case 28:
               endpointResponse = _context.sent;
 
               if (type === 'upgrade') ; else {
@@ -627,14 +677,14 @@ function responseWrapper(func, config, apinionRouter, type) {
                 }
               }
 
-              _context.next = 41;
+              _context.next = 45;
               break;
 
-            case 28:
-              _context.prev = 28;
+            case 32:
+              _context.prev = 32;
               _context.t0 = _context["catch"](0);
-              _context.prev = 30;
-              _context.next = 33;
+              _context.prev = 34;
+              _context.next = 37;
               return (_config = config) === null || _config === void 0 ? void 0 : (_config$onError = _config.onError) === null || _config$onError === void 0 ? void 0 : _config$onError.call(_config, _objectSpread({
                 error: _context.t0,
                 config: config,
@@ -642,8 +692,8 @@ function responseWrapper(func, config, apinionRouter, type) {
                 response: response
               }, extras));
 
-            case 33:
-              _context.next = 35;
+            case 37:
+              _context.next = 39;
               return apinionRouter === null || apinionRouter === void 0 ? void 0 : (_apinionRouter$onErro = apinionRouter.onError) === null || _apinionRouter$onErro === void 0 ? void 0 : _apinionRouter$onErro.call(apinionRouter, _objectSpread({
                 error: _context.t0,
                 config: config,
@@ -651,27 +701,27 @@ function responseWrapper(func, config, apinionRouter, type) {
                 response: response
               }, extras));
 
-            case 35:
-              _context.next = 40;
+            case 39:
+              _context.next = 44;
               break;
 
-            case 37:
-              _context.prev = 37;
-              _context.t1 = _context["catch"](30);
+            case 41:
+              _context.prev = 41;
+              _context.t1 = _context["catch"](34);
               console.error("custom error handler threw error (check your onError handler in your ".concat(((_config2 = config) === null || _config2 === void 0 ? void 0 : _config2.route) || request.originalUrl, " endpoint) (check your apinionRouter.onError function)"), _context.t1);
 
-            case 40:
+            case 44:
               if (!response._headerSent) {
                 // this gets tricky with upgrade requests, you can manually set this flag in your config error handler if you want to avoid the extra data
                 applyHttpError(request, response, _context.t0);
               }
 
-            case 41:
+            case 45:
             case "end":
               return _context.stop();
           }
         }
-      }, _callee, null, [[0, 28], [30, 37]]);
+      }, _callee, null, [[0, 32], [34, 41]]);
     }));
 
     return function (_x, _x2, _x3) {
@@ -680,13 +730,13 @@ function responseWrapper(func, config, apinionRouter, type) {
   }();
 }
 
-function _createSuper$1(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct$1(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+function _createSuper$2(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct$2(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
 
-function _isNativeReflectConstruct$1() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+function _isNativeReflectConstruct$2() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
 var wsRequest = /*#__PURE__*/function (_http$IncomingMessage) {
   _inherits(wsRequest, _http$IncomingMessage);
 
-  var _super = _createSuper$1(wsRequest);
+  var _super = _createSuper$2(wsRequest);
 
   function wsRequest() {
     _classCallCheck(this, wsRequest);
@@ -699,7 +749,7 @@ var wsRequest = /*#__PURE__*/function (_http$IncomingMessage) {
 var wsResponse = /*#__PURE__*/function (_http$OutgoingMessage) {
   _inherits(wsResponse, _http$OutgoingMessage);
 
-  var _super2 = _createSuper$1(wsResponse);
+  var _super2 = _createSuper$2(wsResponse);
 
   function wsResponse(request, socket, configuration) {
     var _this;
@@ -899,17 +949,21 @@ var Router = /*#__PURE__*/function () {
     });
 
     _defineProperty(this, "onError", function () {
+      var _this$parent;
+
       for (var _len = arguments.length, params = new Array(_len), _key = 0; _key < _len; _key++) {
         params[_key] = arguments[_key];
       }
 
       if (_this.onErrorCallback) {
         return _this.onErrorCallback.apply(_this, params);
-      } else {
-        var _this$parent;
+      } // MUST return: handlers are usually async, and every subrouter hop that
+      // dropped the promise detached it from the `await` in responseWrapper. A
+      // handler that threw then rejected with nobody listening — an unhandled
+      // rejection out of a `try` that looks like it covers this.
 
-        (_this$parent = _this.parent) === null || _this$parent === void 0 ? void 0 : _this$parent.onError.apply(_this$parent, params);
-      }
+
+      return (_this$parent = _this.parent) === null || _this$parent === void 0 ? void 0 : _this$parent.onError.apply(_this$parent, params);
     });
 
     _defineProperty(this, "handle404", /*#__PURE__*/function () {

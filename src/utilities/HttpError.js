@@ -1,7 +1,8 @@
 import { getTypeString } from './getTypeString';
 
-export class HttpError {
+export class HttpError extends Error {
   constructor({ status, message, data }) {
+    super();
     this.name = 'HTTP Error';
     this.status = status;
     this.message = message;

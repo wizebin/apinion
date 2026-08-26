@@ -103,9 +103,13 @@ export class Router {
   onError = (...params) => {
     if (this.onErrorCallback) {
       return this.onErrorCallback(...params);
-    } else {
-      this.parent?.onError(...params);
     }
+
+    // MUST return: handlers are usually async, and every subrouter hop that
+    // dropped the promise detached it from the `await` in responseWrapper. A
+    // handler that threw then rejected with nobody listening — an unhandled
+    // rejection out of a `try` that looks like it covers this.
+    return this.parent?.onError(...params);
   }
 
   handle404 = async (request, response) => {

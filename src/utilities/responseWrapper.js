@@ -1,6 +1,9 @@
 import { applyHttpError, HttpError } from './HttpError';
+import { getTypeString } from './getTypeString';
 import { parseBody } from './parseBody';
 import { WritableBufferStream } from './WritableBufferStream';
+
+const EMPTY_BUFFER = Buffer.alloc(0);
 
 function getParams(keyList, { body, query }) {
   const missing = [];
@@ -25,6 +28,30 @@ function collectBody(request) {
   });
 }
 
+// Whether some middleware already owns request.body outright, in which case we
+// neither re-read the stream nor merge anything into what it produced.
+function bodyIsFinal(request) {
+  if (request.readableEnded === true) return true;
+
+  return request._body === true;
+}
+
+function combineBodies(parsedBody, middlewareBody) {
+  if (middlewareBody === undefined || middlewareBody === null) return parsedBody;
+  if (parsedBody === undefined || parsedBody === null) return middlewareBody;
+
+  if (getTypeString(parsedBody) === 'object' && getTypeString(middlewareBody) === 'object') {
+    return Object.assign({}, parsedBody, middlewareBody);
+  }
+
+  return middlewareBody;
+}
+
+function defaultedBody(body) {
+  if (body === undefined || body === null) return {};
+  return body;
+}
+
 /**
  *
  * @param {function} func
@@ -45,11 +72,15 @@ export function responseWrapper(func, config, apinionRouter, type) {
   return async (request, response, extras) => {
     try {
       if (!config.noParse) {
-        request.raw = await collectBody(request);
-        const body = parseBody(request.raw.toString());
-        request.body = body;
+        if (bodyIsFinal(request)) {
+          if (request.raw === undefined) request.raw = EMPTY_BUFFER;
+        } else {
+          request.raw = await collectBody(request);
+          const body = parseBody(request.raw.toString());
+          request.body = combineBodies(body, request.body);
+        }
       }
-      const params = { request, response, body: config.noParse ? undefined : request.body, query: request.query, headers: request.headers, params: Object.assign({}, request.query || {}, request.body || {}), ...extras };
+      const params = { request, response, body: config.noParse ? {} : defaultedBody(request.body), query: request.query, headers: request.headers, params: Object.assign({}, request.query || {}, request.body || {}), ...extras };
       if (config.authenticator) {
         params.identity = await config.authenticator(params);
       }

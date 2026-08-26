@@ -80,11 +80,44 @@ import { Router } from 'apinion';
 
 const router = new Router();
 
-router.get('/upload', { middleware: multer({ dest: '/tmp/' }).single('File') }, ({ request }) => {
+router.post('/upload', { middleware: multer({ dest: '/tmp/' }).single('File') }, ({ request, body }) => {
   // do whatever you want with request.file, request.file.path contains the temporary file path
+  // multipart text fields are on body, so they work with `required` like any other endpoint
 });
 
 router.listen(5934);
+```
+
+#### how apinion and body middleware share the body
+
+Middleware that reads the request stream owns the body completely — apinion will
+not re-read the stream or touch what the middleware produced. That covers multer,
+body-parser, and anything else that actually parses a payload.
+
+Middleware that never reads the stream can still add to the body. Apinion parses
+the request as usual and layers the middleware's values on top, so both survive:
+
+```javascript
+const addTenant = (request, response, next) => {
+  request.body = { tenant: lookupTenant(request) };
+  next();
+};
+
+// a POST of {"name":"thing"} reaches the endpoint as {name:'thing',tenant:'acme'}
+router.post('/thing', { middleware: addTenant }, ({ body }) => body);
+```
+
+The middleware's values win on conflict, so a caller cannot overwrite `tenant` by
+putting its own `tenant` in the request body. If your middleware wants to *replace*
+the body rather than add to it, set `request._body = true` and apinion will leave
+it alone entirely:
+
+```javascript
+const replaceBody = (request, response, next) => {
+  request.body = { onlyTheseValues: true };
+  request._body = true; // apinion will not parse the request or merge anything in
+  next();
+};
 ```
 
 ### using router arrays
